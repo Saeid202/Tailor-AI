@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
+import { PoseLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { PoseResult } from '@/types/pose';
 
-export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement>) {
+export function usePoseDetection(videoElement: HTMLVideoElement | null) {
   const [poseResult, setPoseResult] = useState<PoseResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +14,7 @@ export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement>) {
 
     const initializePoseDetection = async () => {
       try {
+        console.log('Initializing MediaPipe pose detection...');
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
         );
@@ -31,6 +32,7 @@ export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement>) {
         });
 
         if (mounted) {
+          console.log('MediaPipe initialized successfully');
           poseLandmarkerRef.current = poseLandmarker;
           setIsLoading(false);
         }
@@ -54,41 +56,62 @@ export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement>) {
   }, []);
 
   useEffect(() => {
-    if (!poseLandmarkerRef.current || !videoRef.current || isLoading) return;
+    if (!poseLandmarkerRef.current || !videoElement || isLoading) {
+      return;
+    }
 
+    let frameCount = 0;
+    
     const detectPose = () => {
-      const video = videoRef.current;
+      const video = videoElement;
       const poseLandmarker = poseLandmarkerRef.current;
 
-      if (!video || !poseLandmarker || video.readyState !== 4) {
+      if (!video || !poseLandmarker) {
+        animationFrameRef.current = requestAnimationFrame(detectPose);
+        return;
+      }
+
+      // Check if video is ready
+      if (video.readyState < 2) {
         animationFrameRef.current = requestAnimationFrame(detectPose);
         return;
       }
 
       const startTimeMs = performance.now();
-      const result = poseLandmarker.detectForVideo(video, startTimeMs);
+      
+      try {
+        const result = poseLandmarker.detectForVideo(video, startTimeMs);
 
-      if (result.landmarks && result.landmarks.length > 0) {
-        setPoseResult({
-          landmarks: result.landmarks[0].map(l => ({
-            x: l.x,
-            y: l.y,
-            z: l.z || 0,
-            visibility: l.visibility || 1
-          })),
-          worldLandmarks: result.worldLandmarks?.[0]?.map(l => ({
-            x: l.x,
-            y: l.y,
-            z: l.z || 0,
-            visibility: l.visibility || 1
-          })) || [],
-          timestamp: startTimeMs
-        });
+        frameCount++;
+        if (frameCount % 30 === 0) {
+          console.log('Pose detection running, landmarks found:', result.landmarks?.length || 0);
+        }
+
+        if (result.landmarks && result.landmarks.length > 0) {
+          setPoseResult({
+            landmarks: result.landmarks[0].map(l => ({
+              x: l.x,
+              y: l.y,
+              z: l.z || 0,
+              visibility: l.visibility || 1
+            })),
+            worldLandmarks: result.worldLandmarks?.[0]?.map(l => ({
+              x: l.x,
+              y: l.y,
+              z: l.z || 0,
+              visibility: l.visibility || 1
+            })) || [],
+            timestamp: startTimeMs
+          });
+        }
+      } catch (err) {
+        console.error('Pose detection error:', err);
       }
 
       animationFrameRef.current = requestAnimationFrame(detectPose);
     };
 
+    console.log('Starting pose detection loop');
     detectPose();
 
     return () => {
@@ -96,7 +119,7 @@ export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement>) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [videoRef, isLoading]);
+  }, [videoElement, isLoading]);
 
   return { poseResult, isLoading, error };
 }

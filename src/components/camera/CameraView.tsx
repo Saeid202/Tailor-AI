@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import { GarmentType } from '@/types/garment';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
@@ -20,16 +20,25 @@ interface CameraViewProps {
 
 export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   const webcamRef = useRef<Webcam>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
 
   const config = GARMENT_CONFIGS[garmentType];
-  const { poseResult, isLoading, error } = usePoseDetection(videoRef);
+  const { poseResult, isLoading, error } = usePoseDetection(videoElement);
   const { qualityGates, allChecksPassed } = useQualityChecks(
     poseResult,
-    videoRef,
+    videoElement,
     config.requiredLandmarks
   );
+
+  // Connect video element when webcam loads
+  useEffect(() => {
+    const video = webcamRef.current?.video;
+    if (video && video !== videoElement) {
+      console.log('Video element connected:', video.videoWidth, 'x', video.videoHeight);
+      setVideoElement(video);
+    }
+  }, [webcamRef.current?.video, videoElement]);
 
   const handleCapture = () => {
     if (!poseResult || !webcamRef.current) return;
@@ -42,12 +51,12 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   const countdown = useAutoCapture(allChecksPassed, handleCapture);
 
   // Update live measurements
-  if (poseResult && poseResult.landmarks.length > 0) {
-    const measurements = calculateMeasurements(poseResult.landmarks, garmentType, unit);
-    if (JSON.stringify(measurements) !== JSON.stringify(liveMeasurements)) {
+  useEffect(() => {
+    if (poseResult && poseResult.landmarks.length > 0) {
+      const measurements = calculateMeasurements(poseResult.landmarks, garmentType, unit);
       setLiveMeasurements(measurements);
     }
-  }
+  }, [poseResult, garmentType, unit]);
 
   if (error) {
     return (
@@ -70,9 +79,11 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
           facingMode: 'user'
         }}
         className="absolute inset-0 w-full h-full object-cover"
-        onLoadedData={() => {
-          if (webcamRef.current?.video) {
-            videoRef.current = webcamRef.current.video;
+        onLoadedMetadata={() => {
+          const video = webcamRef.current?.video;
+          if (video) {
+            console.log('Webcam loaded:', video.readyState, video.videoWidth);
+            setVideoElement(video);
           }
         }}
       />

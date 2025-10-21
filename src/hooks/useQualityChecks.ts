@@ -8,7 +8,7 @@ import { checkOcclusion } from '@/lib/quality/occlusionCheck';
 
 export function useQualityChecks(
   poseResult: PoseResult | null,
-  videoRef: React.RefObject<HTMLVideoElement>,
+  videoElement: HTMLVideoElement | null,
   requiredLandmarks: number[]
 ) {
   const [qualityGates, setQualityGates] = useState<QualityGates>({
@@ -28,11 +28,11 @@ export function useQualityChecks(
   }, []);
 
   useEffect(() => {
-    if (!poseResult || !videoRef.current || !canvasRef.current) {
+    if (!poseResult || !videoElement || !canvasRef.current) {
       return;
     }
 
-    const video = videoRef.current;
+    const video = videoElement;
     const canvas = canvasRef.current;
     const { landmarks } = poseResult;
 
@@ -53,7 +53,7 @@ export function useQualityChecks(
       lighting,
       occlusion
     });
-  }, [poseResult, videoRef, requiredLandmarks]);
+  }, [poseResult, videoElement, requiredLandmarks]);
 
   const allChecksPassed = Object.values(qualityGates).every(check => check.passed);
 
