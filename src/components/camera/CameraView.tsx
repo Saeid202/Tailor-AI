@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import Webcam from 'react-webcam';
 import { GarmentType } from '@/types/garment';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
@@ -14,16 +14,26 @@ import { Measurement } from '@/types/measurements';
 import { GARMENT_CONFIGS } from '@/types/garment';
 import { CaptureProgress } from './CaptureProgress';
 import { Loader2, Video, VideoOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface CameraViewProps {
   garmentType: GarmentType;
   unit: 'cm' | 'in';
   onCapture: (measurements: Measurement[], imageDataUrl: string) => void;
+  onLiveMeasurements?: (measurements: Measurement[]) => void;
   userHeightCm?: number;
 }
 
-export function CameraView({ garmentType, unit, onCapture, userHeightCm }: CameraViewProps) {
+export type CameraViewHandle = {
+  start: () => void;
+  stop: () => void;
+  toggle: () => void;
+  isActive: () => boolean;
+};
+
+export const CameraView = forwardRef<CameraViewHandle, CameraViewProps>(function CameraView(
+  { garmentType, unit, onCapture, onLiveMeasurements, userHeightCm }: CameraViewProps,
+  ref
+) {
   const webcamRef = useRef<Webcam>(null);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
@@ -67,6 +77,18 @@ export function CameraView({ garmentType, unit, onCapture, userHeightCm }: Camer
 
   const { countdown, progress } = useAutoCapture(allChecksPassed, handleCapture);
 
+  // Expose start/stop/toggle via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      start: () => setIsCameraActive(true),
+      stop: () => setIsCameraActive(false),
+      toggle: () => setIsCameraActive((v) => !v),
+      isActive: () => isCameraActive,
+    }),
+    [isCameraActive]
+  );
+
   // Update live measurements with throttling and averaging
   useEffect(() => {
     if (!poseResult || !videoElement || !qualityGates.stability.passed) {
@@ -98,6 +120,7 @@ export function CameraView({ garmentType, unit, onCapture, userHeightCm }: Camer
     if (newBuffer.length >= 3) {
       const averaged = averageMeasurements(newBuffer);
       setLiveMeasurements(averaged);
+      onLiveMeasurements?.(averaged);
     }
   }, [poseResult, videoElement, garmentType, unit, qualityGates.stability.passed]);
 
@@ -113,8 +136,9 @@ export function CameraView({ garmentType, unit, onCapture, userHeightCm }: Camer
   }
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden flex flex-col">
-      <div className="relative flex-1">
+    <div className="w-full h-full bg-black relative">
+      {/* Camera Content Area */}
+      <div className="absolute inset-0">
         {isCameraActive ? (
           <Webcam
             ref={webcamRef}
@@ -133,11 +157,11 @@ export function CameraView({ garmentType, unit, onCapture, userHeightCm }: Camer
             }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/90">
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
             <div className="text-center text-white">
               <VideoOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg">Camera is stopped</p>
-              <p className="text-sm text-white/60 mt-2">Click Start Camera to begin</p>
+              <p className="text-sm text-white/60 mt-2">Use the button below to start</p>
             </div>
           </div>
         )}
@@ -170,27 +194,6 @@ export function CameraView({ garmentType, unit, onCapture, userHeightCm }: Camer
           </>
         )}
       </div>
-
-      <div className="p-4 bg-black/80 backdrop-blur-sm">
-        <Button
-          onClick={() => setIsCameraActive(!isCameraActive)}
-          size="lg"
-          className="w-full"
-          variant={isCameraActive ? "destructive" : "default"}
-        >
-          {isCameraActive ? (
-            <>
-              <VideoOff className="mr-2" />
-              Stop Camera
-            </>
-          ) : (
-            <>
-              <Video className="mr-2" />
-              Start Camera
-            </>
-          )}
-        </Button>
-      </div>
     </div>
   );
-}
+});
