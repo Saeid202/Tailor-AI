@@ -9,11 +9,32 @@ function distance3D(p1: PoseLandmark, p2: PoseLandmark): number {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-// Calculate pixel to cm scale using world landmarks (in meters)
-function calculateScale(worldLandmarks: PoseLandmark[], frameWidth: number): number {
+// Calculate pixel to cm scale using world landmarks (in meters) and user height for calibration
+function calculateScale(
+  worldLandmarks: PoseLandmark[], 
+  landmarks: PoseLandmark[],
+  frameWidth: number,
+  frameHeight: number,
+  userHeightCm?: number
+): number {
   if (!worldLandmarks || worldLandmarks.length === 0) {
     // Fallback: use normalized coordinates with pixel conversion
     return frameWidth * 50; // Rough estimation
+  }
+  
+  // If user height is provided, use it for more accurate calibration
+  if (userHeightCm && userHeightCm > 0) {
+    // Calculate full body height from landmarks (nose to ankle)
+    const nose = worldLandmarks[0];
+    const leftAnkle = worldLandmarks[27];
+    const rightAnkle = worldLandmarks[28];
+    const ankle = leftAnkle.visibility > rightAnkle.visibility ? leftAnkle : rightAnkle;
+    
+    const measuredHeightMeters = Math.abs(nose.y - ankle.y);
+    if (measuredHeightMeters > 0) {
+      // Scale factor: actual height / measured height
+      return userHeightCm / (measuredHeightMeters * 100);
+    }
   }
   
   // Use world landmarks (in meters) for accurate scale
@@ -32,7 +53,8 @@ export function calculateMeasurements(
   garmentType: GarmentType,
   unit: 'cm' | 'in' = 'cm',
   frameWidth: number = 1280,
-  frameHeight: number = 720
+  frameHeight: number = 720,
+  userHeightCm?: number
 ): Measurement[] {
   // Convert normalized landmarks to pixel coordinates for accurate distance calculation
   const pixelLandmarks = landmarks.map(l => ({
@@ -44,8 +66,8 @@ export function calculateMeasurements(
   
   // Use world landmarks for scale if available, otherwise estimate
   const scale = worldLandmarks.length > 0 
-    ? 1 // World landmarks are already in meters, convert to cm in calculations
-    : calculateScale(worldLandmarks, frameWidth);
+    ? calculateScale(worldLandmarks, landmarks, frameWidth, frameHeight, userHeightCm)
+    : calculateScale(worldLandmarks, landmarks, frameWidth, frameHeight, userHeightCm);
     
   const measurements: Measurement[] = [];
   const timestamp = Date.now();

@@ -173,6 +173,7 @@ const Index = () => {
             garmentType={garmentType}
             unit={unit}
             onCapture={handleCapture}
+            userHeightCm={profile?.height_cm || undefined}
           />
         ) : stage === 'results' && result ? (
           <ResultsScreen

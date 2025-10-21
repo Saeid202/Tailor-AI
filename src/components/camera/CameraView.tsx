@@ -20,9 +20,10 @@ interface CameraViewProps {
   garmentType: GarmentType;
   unit: 'cm' | 'in';
   onCapture: (measurements: Measurement[], imageDataUrl: string) => void;
+  userHeightCm?: number;
 }
 
-export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
+export function CameraView({ garmentType, unit, onCapture, userHeightCm }: CameraViewProps) {
   const webcamRef = useRef<Webcam>(null);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
@@ -58,7 +59,8 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
       garmentType,
       unit,
       videoElement.videoWidth,
-      videoElement.videoHeight
+      videoElement.videoHeight,
+      userHeightCm
     );
     onCapture(measurements, imageDataUrl);
   };
@@ -84,7 +86,8 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
       garmentType,
       unit,
       videoElement.videoWidth,
-      videoElement.videoHeight
+      videoElement.videoHeight,
+      userHeightCm
     );
 
     // Buffer last 5 measurements for averaging
