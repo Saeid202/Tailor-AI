@@ -4,17 +4,24 @@ import { Measurement, MeasurementResult } from '@/types/measurements';
 import { GarmentTabs } from '@/components/layout/GarmentTabs';
 import { CameraView } from '@/components/camera/CameraView';
 import { ResultsScreen } from '@/components/results/ResultsScreen';
+import { HistoryView } from '@/components/results/HistoryView';
 import { HelpModal } from '@/components/ui/HelpModal';
+import { Button } from '@/components/ui/button';
 import { convertMeasurement } from '@/lib/utils/unitConversion';
 import { resetStabilityHistory } from '@/lib/quality/stabilityCheck';
+import { useMeasurements } from '@/hooks/useMeasurements';
+import { useAuth } from '@/hooks/useAuth';
+import { History, Camera, LogOut } from 'lucide-react';
 
-type Stage = 'camera' | 'results';
+type Stage = 'camera' | 'results' | 'history';
 
 const Index = () => {
   const [garmentType, setGarmentType] = useState<GarmentType>('shirt');
   const [stage, setStage] = useState<Stage>('camera');
   const [unit, setUnit] = useState<'cm' | 'in'>('cm');
   const [result, setResult] = useState<MeasurementResult | null>(null);
+  const { measurements, loading, saveMeasurement, deleteMeasurement } = useMeasurements();
+  const { signOut } = useAuth();
 
   const handleCapture = (measurements: Measurement[], imageDataUrl: string) => {
     const capturedResult: MeasurementResult = {
@@ -58,6 +65,30 @@ const Index = () => {
     resetStabilityHistory();
   };
 
+  const handleSave = async () => {
+    if (result) {
+      await saveMeasurement(result);
+    }
+  };
+
+  const handleViewHistory = () => {
+    setStage('history');
+  };
+
+  const handleViewMeasurement = (measurement: MeasurementResult) => {
+    setResult(measurement);
+    setStage('results');
+  };
+
+  const handleBackToCamera = () => {
+    setStage('camera');
+    setResult(null);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
@@ -68,7 +99,24 @@ const Index = () => {
               <h1 className="text-2xl font-bold">Tailor AI</h1>
               <p className="text-sm text-muted-foreground">AI-powered body measurements</p>
             </div>
-            <HelpModal />
+            <div className="flex items-center gap-2">
+              {stage !== 'camera' && (
+                <Button variant="outline" onClick={handleBackToCamera}>
+                  <Camera className="w-4 h-4 mr-2" />
+                  New Measurement
+                </Button>
+              )}
+              {stage !== 'history' && (
+                <Button variant="outline" onClick={handleViewHistory}>
+                  <History className="w-4 h-4 mr-2" />
+                  History
+                </Button>
+              )}
+              <HelpModal />
+              <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           {stage === 'camera' && (
@@ -85,12 +133,20 @@ const Index = () => {
             unit={unit}
             onCapture={handleCapture}
           />
-        ) : result ? (
+        ) : stage === 'results' && result ? (
           <ResultsScreen
             result={result}
             onRetake={handleRetake}
             onToggleUnit={handleToggleUnit}
             currentUnit={unit}
+            onSave={handleSave}
+          />
+        ) : stage === 'history' ? (
+          <HistoryView
+            measurements={measurements}
+            onView={handleViewMeasurement}
+            onDelete={deleteMeasurement}
+            loading={loading}
           />
         ) : null}
       </main>

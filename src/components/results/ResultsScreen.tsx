@@ -1,7 +1,7 @@
 import { MeasurementResult } from '@/types/measurements';
 import { MeasurementTable } from './MeasurementTable';
 import { Button } from '@/components/ui/button';
-import { Download, RotateCcw } from 'lucide-react';
+import { Download, RotateCcw, Save } from 'lucide-react';
 import { exportMeasurementsAsJSON } from '@/lib/utils/jsonExport';
 
 interface ResultsScreenProps {
@@ -9,9 +9,10 @@ interface ResultsScreenProps {
   onRetake: () => void;
   onToggleUnit: () => void;
   currentUnit: 'cm' | 'in';
+  onSave: () => void;
 }
 
-export function ResultsScreen({ result, onRetake, onToggleUnit, currentUnit }: ResultsScreenProps) {
+export function ResultsScreen({ result, onRetake, onToggleUnit, currentUnit, onSave }: ResultsScreenProps) {
   const handleExport = () => {
     exportMeasurementsAsJSON(result);
   };
@@ -48,7 +49,11 @@ export function ResultsScreen({ result, onRetake, onToggleUnit, currentUnit }: R
             <RotateCcw className="w-4 h-4 mr-2" />
             Retake
           </Button>
-          <Button onClick={handleExport} className="flex-1">
+          <Button onClick={onSave} variant="default" className="flex-1">
+            <Save className="w-4 h-4 mr-2" />
+            Save
+          </Button>
+          <Button onClick={handleExport} variant="outline" className="flex-1">
             <Download className="w-4 h-4 mr-2" />
             Export JSON
           </Button>
