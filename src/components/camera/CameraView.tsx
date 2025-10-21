@@ -12,6 +12,7 @@ import { calculateMeasurements } from '@/lib/pose/measurements';
 import { averageMeasurements } from '@/lib/utils/measurementAveraging';
 import { Measurement } from '@/types/measurements';
 import { GARMENT_CONFIGS } from '@/types/garment';
+import { CaptureProgress } from './CaptureProgress';
 import { Loader2 } from 'lucide-react';
 
 interface CameraViewProps {
@@ -32,7 +33,8 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   const { qualityGates, allChecksPassed } = useQualityChecks(
     poseResult,
     videoElement,
-    config.requiredLandmarks
+    config.requiredLandmarks,
+    config.region
   );
 
   // Connect video element when webcam loads
@@ -59,7 +61,7 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
     onCapture(measurements, imageDataUrl);
   };
 
-  const countdown = useAutoCapture(allChecksPassed, handleCapture);
+  const { countdown, progress } = useAutoCapture(allChecksPassed, handleCapture);
 
   // Update live measurements with throttling and averaging
   useEffect(() => {
@@ -147,11 +149,7 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
           <MeasurementChips measurements={liveMeasurements} />
 
           {countdown !== null && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-9xl font-bold text-white drop-shadow-lg animate-pulse">
-                {countdown}
-              </div>
-            </div>
+            <CaptureProgress countdown={countdown} progress={progress} />
           )}
         </>
       )}

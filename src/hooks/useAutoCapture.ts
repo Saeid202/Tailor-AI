@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 
-const CAPTURE_DELAY = 1000; // ms - time all checks must pass
+const CAPTURE_DELAY = 2500; // ms - time all checks must pass
 
 export function useAutoCapture(
   allChecksPassed: boolean,
   onCapture: () => void
 ) {
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [progress, setProgress] = useState<number>(0);
   const timerRef = useRef<NodeJS.Timeout>();
   const startTimeRef = useRef<number>();
 
@@ -20,6 +21,7 @@ export function useAutoCapture(
       const remaining = Math.max(0, CAPTURE_DELAY - elapsed);
 
       setCountdown(Math.ceil(remaining / 1000));
+      setProgress(Math.min(100, (elapsed / CAPTURE_DELAY) * 100));
 
       if (remaining <= 0) {
         onCapture();
@@ -34,6 +36,7 @@ export function useAutoCapture(
       // Reset if checks fail
       startTimeRef.current = undefined;
       setCountdown(null);
+      setProgress(0);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
@@ -46,5 +49,5 @@ export function useAutoCapture(
     };
   }, [allChecksPassed, onCapture]);
 
-  return countdown;
+  return { countdown, progress };
 }

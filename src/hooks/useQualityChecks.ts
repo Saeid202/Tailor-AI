@@ -9,7 +9,8 @@ import { checkOcclusion } from '@/lib/quality/occlusionCheck';
 export function useQualityChecks(
   poseResult: PoseResult | null,
   videoElement: HTMLVideoElement | null,
-  requiredLandmarks: number[]
+  requiredLandmarks: number[],
+  bodyRegion: 'upper' | 'lower' = 'upper'
 ) {
   const [qualityGates, setQualityGates] = useState<QualityGates>({
     poseInFrame: { passed: false, message: 'Waiting...', severity: 'info' },
@@ -41,7 +42,7 @@ export function useQualityChecks(
       ? { passed: true, message: 'Pose detected', severity: 'info' as const }
       : { passed: false, message: 'No pose detected', severity: 'warning' as const };
 
-    const distance = checkDistance(landmarks, video.videoHeight);
+    const distance = checkDistance(landmarks, video.videoHeight, bodyRegion);
     const stability = checkStability(landmarks, video.videoWidth, video.videoHeight);
     const lighting = checkLighting(video, canvas);
     const occlusion = checkOcclusion(landmarks, requiredLandmarks);
@@ -53,7 +54,7 @@ export function useQualityChecks(
       lighting,
       occlusion
     });
-  }, [poseResult, videoElement, requiredLandmarks]);
+  }, [poseResult, videoElement, requiredLandmarks, bodyRegion]);
 
   const allChecksPassed = Object.values(qualityGates).every(check => check.passed);
 

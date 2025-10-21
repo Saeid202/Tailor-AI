@@ -1,3 +1,5 @@
+export type BodyRegion = 'upper' | 'lower';
+
 export interface PoseLandmark {
   x: number;
   y: number;

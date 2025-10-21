@@ -1,7 +1,7 @@
 import { QualityCheck } from '@/types/pose';
 import { PoseLandmark } from '@/types/pose';
 
-const VISIBILITY_THRESHOLD = 0.6;
+const VISIBILITY_THRESHOLD = 0.5;
 
 export function checkOcclusion(
   landmarks: PoseLandmark[],
@@ -13,6 +13,17 @@ export function checkOcclusion(
     if (landmarks[idx].visibility < VISIBILITY_THRESHOLD) {
       missingLandmarks.push(idx);
     }
+  }
+  
+  // More forgiving: pass if 80% of landmarks are visible
+  const visibilityRate = (requiredLandmarks.length - missingLandmarks.length) / requiredLandmarks.length;
+  
+  if (visibilityRate >= 0.8) {
+    return {
+      passed: true,
+      message: 'All visible',
+      severity: 'info'
+    };
   }
   
   if (missingLandmarks.length > 0) {
