@@ -7,7 +7,9 @@ import { useAutoCapture } from '@/hooks/useAutoCapture';
 import { AvatarOverlay } from './AvatarOverlay';
 import { QualityIndicators } from './QualityIndicators';
 import { MeasurementChips } from './MeasurementChips';
+import { PoseLandmarksOverlay } from './PoseLandmarksOverlay';
 import { calculateMeasurements } from '@/lib/pose/measurements';
+import { averageMeasurements } from '@/lib/utils/measurementAveraging';
 import { Measurement } from '@/types/measurements';
 import { GARMENT_CONFIGS } from '@/types/garment';
 import { Loader2 } from 'lucide-react';
@@ -22,6 +24,8 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   const webcamRef = useRef<Webcam>(null);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
+  const [measurementBuffer, setMeasurementBuffer] = useState<Measurement[][]>([]);
+  const lastUpdateRef = useRef<number>(0);
 
   const config = GARMENT_CONFIGS[garmentType];
   const { poseResult, isLoading, error } = usePoseDetection(videoElement);
@@ -41,22 +45,54 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   }, [webcamRef.current?.video, videoElement]);
 
   const handleCapture = () => {
-    if (!poseResult || !webcamRef.current) return;
+    if (!poseResult || !webcamRef.current || !videoElement) return;
 
     const imageDataUrl = webcamRef.current.getScreenshot() || '';
-    const measurements = calculateMeasurements(poseResult.landmarks, garmentType, unit);
+    const measurements = calculateMeasurements(
+      poseResult.landmarks,
+      poseResult.worldLandmarks,
+      garmentType,
+      unit,
+      videoElement.videoWidth,
+      videoElement.videoHeight
+    );
     onCapture(measurements, imageDataUrl);
   };
 
   const countdown = useAutoCapture(allChecksPassed, handleCapture);
 
-  // Update live measurements
+  // Update live measurements with throttling and averaging
   useEffect(() => {
-    if (poseResult && poseResult.landmarks.length > 0) {
-      const measurements = calculateMeasurements(poseResult.landmarks, garmentType, unit);
-      setLiveMeasurements(measurements);
+    if (!poseResult || !videoElement || !qualityGates.stability.passed) {
+      setLiveMeasurements([]);
+      setMeasurementBuffer([]);
+      return;
     }
-  }, [poseResult, garmentType, unit]);
+
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 500) return; // Throttle to 2 Hz
+
+    lastUpdateRef.current = now;
+    
+    const measurements = calculateMeasurements(
+      poseResult.landmarks,
+      poseResult.worldLandmarks,
+      garmentType,
+      unit,
+      videoElement.videoWidth,
+      videoElement.videoHeight
+    );
+
+    // Buffer last 5 measurements for averaging
+    const newBuffer = [...measurementBuffer, measurements].slice(-5);
+    setMeasurementBuffer(newBuffer);
+
+    // Show averaged measurements
+    if (newBuffer.length >= 3) {
+      const averaged = averageMeasurements(newBuffer);
+      setLiveMeasurements(averaged);
+    }
+  }, [poseResult, videoElement, garmentType, unit, qualityGates.stability.passed]);
 
   if (error) {
     return (
@@ -100,6 +136,13 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
       {!isLoading && (
         <>
           <AvatarOverlay garmentType={garmentType} />
+          {poseResult && videoElement && (
+            <PoseLandmarksOverlay 
+              landmarks={poseResult.landmarks}
+              videoWidth={videoElement.videoWidth}
+              videoHeight={videoElement.videoHeight}
+            />
+          )}
           <QualityIndicators qualityGates={qualityGates} />
           <MeasurementChips measurements={liveMeasurements} />
 

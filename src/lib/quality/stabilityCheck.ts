@@ -11,7 +11,7 @@ const STABILITY_WINDOW = 1000; // ms
 const MAX_JITTER = 15; // pixels
 const KEY_LANDMARKS = [0, 11, 12, 23, 24]; // nose, shoulders, hips
 
-export function checkStability(landmarks: PoseLandmark[]): QualityCheck {
+export function checkStability(landmarks: PoseLandmark[], frameWidth: number = 1280, frameHeight: number = 720): QualityCheck {
   const now = Date.now();
   
   // Add current pose to history
@@ -47,7 +47,8 @@ export function checkStability(landmarks: PoseLandmark[]): QualityCheck {
     const xVariance = xValues.reduce((sum, val) => sum + Math.pow(val - xMean, 2), 0) / xValues.length;
     const yVariance = yValues.reduce((sum, val) => sum + Math.pow(val - yMean, 2), 0) / yValues.length;
     
-    const jitter = Math.sqrt(xVariance + yVariance) * 1000; // Scale to pixels
+    // Convert normalized variance to pixel jitter
+    const jitter = Math.sqrt(xVariance * frameWidth * frameWidth + yVariance * frameHeight * frameHeight);
     totalJitter += jitter;
     count++;
   }

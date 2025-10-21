@@ -9,27 +9,54 @@ function distance3D(p1: PoseLandmark, p2: PoseLandmark): number {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-function calculatePixelToCm(landmarks: PoseLandmark[]): number {
-  // Use shoulder to hip distance as reference (approx 50cm for average person)
-  const leftShoulder = landmarks[11];
-  const leftHip = landmarks[23];
-  const pixelDistance = distance3D(leftShoulder, leftHip);
-  const referenceCm = 50;
-  return referenceCm / pixelDistance;
+// Calculate pixel to cm scale using world landmarks (in meters)
+function calculateScale(worldLandmarks: PoseLandmark[], frameWidth: number): number {
+  if (!worldLandmarks || worldLandmarks.length === 0) {
+    // Fallback: use normalized coordinates with pixel conversion
+    return frameWidth * 50; // Rough estimation
+  }
+  
+  // Use world landmarks (in meters) for accurate scale
+  const leftShoulder = worldLandmarks[11];
+  const leftHip = worldLandmarks[23];
+  const distanceMeters = distance3D(leftShoulder, leftHip);
+  const referenceCm = 50; // Shoulder to hip is ~50cm
+  
+  // Convert meters to cm
+  return referenceCm / (distanceMeters * 100);
 }
 
 export function calculateMeasurements(
   landmarks: PoseLandmark[],
+  worldLandmarks: PoseLandmark[],
   garmentType: GarmentType,
-  unit: 'cm' | 'in' = 'cm'
+  unit: 'cm' | 'in' = 'cm',
+  frameWidth: number = 1280,
+  frameHeight: number = 720
 ): Measurement[] {
-  const scale = calculatePixelToCm(landmarks);
+  // Convert normalized landmarks to pixel coordinates for accurate distance calculation
+  const pixelLandmarks = landmarks.map(l => ({
+    ...l,
+    x: l.x * frameWidth,
+    y: l.y * frameHeight,
+    z: l.z * frameWidth // Scale z-depth
+  }));
+  
+  // Use world landmarks for scale if available, otherwise estimate
+  const scale = worldLandmarks.length > 0 
+    ? 1 // World landmarks are already in meters, convert to cm in calculations
+    : calculateScale(worldLandmarks, frameWidth);
+    
   const measurements: Measurement[] = [];
   const timestamp = Date.now();
 
   if (garmentType === 'shirt' || garmentType === 't-shirt') {
+    // Use world landmarks if available for more accurate measurements
+    const measureLandmarks = worldLandmarks.length > 0 ? worldLandmarks : pixelLandmarks;
+    const scaleFactor = worldLandmarks.length > 0 ? 100 : scale; // Convert meters to cm or use pixel scale
+    
     // Shoulder width
-    const shoulderWidth = distance3D(landmarks[11], landmarks[12]) * scale;
+    const shoulderWidth = distance3D(measureLandmarks[11], measureLandmarks[12]) * scaleFactor;
     measurements.push({
       type: 'shoulder_width',
       label: MEASUREMENT_LABELS.shoulder_width,
@@ -40,20 +67,20 @@ export function calculateMeasurements(
     });
 
     // Neck circumference (approximation)
-    const neckToShoulder = distance3D(landmarks[0], landmarks[11]) * scale;
+    const neckToShoulder = distance3D(measureLandmarks[0], measureLandmarks[11]) * scaleFactor;
     const neckCirc = neckToShoulder * Math.PI;
     measurements.push({
       type: 'neck_circumference',
       label: MEASUREMENT_LABELS.neck_circumference,
       value: neckCirc,
       unit,
-      confidence: landmarks[0].visibility * 0.7, // Lower confidence for approximation
+      confidence: landmarks[0].visibility * 0.7,
       timestamp
     });
 
     // Chest (shoulder width + depth estimation)
-    const depthFactor = 1 + Math.abs(landmarks[11].z - landmarks[12].z);
-    const chest = shoulderWidth * depthFactor * 2.2; // Circumference estimation
+    const depthFactor = 1 + Math.abs(measureLandmarks[11].z - measureLandmarks[12].z) / 10;
+    const chest = shoulderWidth * depthFactor * 2.2;
     measurements.push({
       type: 'chest',
       label: MEASUREMENT_LABELS.chest,
@@ -64,8 +91,8 @@ export function calculateMeasurements(
     });
 
     // Waist (upper)
-    const waistWidth = distance3D(landmarks[23], landmarks[24]) * scale;
-    const waist = waistWidth * 2.5; // Circumference estimation
+    const waistWidth = distance3D(measureLandmarks[23], measureLandmarks[24]) * scaleFactor;
+    const waist = waistWidth * 2.5;
     measurements.push({
       type: 'waist',
       label: MEASUREMENT_LABELS.waist,
@@ -76,7 +103,8 @@ export function calculateMeasurements(
     });
 
     // Sleeve length
-    const sleeveLeft = (distance3D(landmarks[11], landmarks[13]) + distance3D(landmarks[13], landmarks[15])) * scale;
+    const sleeveLeft = (distance3D(measureLandmarks[11], measureLandmarks[13]) + 
+                        distance3D(measureLandmarks[13], measureLandmarks[15])) * scaleFactor;
     measurements.push({
       type: 'sleeve_length',
       label: MEASUREMENT_LABELS.sleeve_length,
@@ -87,7 +115,7 @@ export function calculateMeasurements(
     });
 
     // Bicep
-    const bicep = distance3D(landmarks[11], landmarks[13]) * scale * 0.6; // Approximate circumference
+    const bicep = distance3D(measureLandmarks[11], measureLandmarks[13]) * scaleFactor * 0.6;
     measurements.push({
       type: 'bicep',
       label: MEASUREMENT_LABELS.bicep,
@@ -99,8 +127,11 @@ export function calculateMeasurements(
   }
 
   if (garmentType === 'pant') {
+    const measureLandmarks = worldLandmarks.length > 0 ? worldLandmarks : pixelLandmarks;
+    const scaleFactor = worldLandmarks.length > 0 ? 100 : scale;
+    
     // Waist (lower)
-    const waistWidth = distance3D(landmarks[23], landmarks[24]) * scale;
+    const waistWidth = distance3D(measureLandmarks[23], measureLandmarks[24]) * scaleFactor;
     const waist = waistWidth * 2.5;
     measurements.push({
       type: 'waist_lower',
@@ -112,7 +143,7 @@ export function calculateMeasurements(
     });
 
     // Hip
-    const hipWidth = waistWidth * 1.15; // Hips typically wider
+    const hipWidth = waistWidth * 1.15;
     const hip = hipWidth * 2.5;
     measurements.push({
       type: 'hip',
@@ -124,7 +155,8 @@ export function calculateMeasurements(
     });
 
     // Outseam (hip to ankle)
-    const outseam = (distance3D(landmarks[23], landmarks[25]) + distance3D(landmarks[25], landmarks[27])) * scale;
+    const outseam = (distance3D(measureLandmarks[23], measureLandmarks[25]) + 
+                     distance3D(measureLandmarks[25], measureLandmarks[27])) * scaleFactor;
     measurements.push({
       type: 'outseam',
       label: MEASUREMENT_LABELS.outseam,
@@ -134,9 +166,8 @@ export function calculateMeasurements(
       timestamp
     });
 
-    // Inseam (approximate from midpoint of hips to ankle)
-    const hipMidY = (landmarks[23].y + landmarks[24].y) / 2;
-    const inseamApprox = outseam * 0.75; // Rough estimation
+    // Inseam (approximate)
+    const inseamApprox = outseam * 0.75;
     measurements.push({
       type: 'inseam',
       label: MEASUREMENT_LABELS.inseam,
@@ -147,7 +178,7 @@ export function calculateMeasurements(
     });
 
     // Thigh
-    const thigh = distance3D(landmarks[23], landmarks[25]) * scale * 0.65;
+    const thigh = distance3D(measureLandmarks[23], measureLandmarks[25]) * scaleFactor * 0.65;
     measurements.push({
       type: 'thigh',
       label: MEASUREMENT_LABELS.thigh,
@@ -158,7 +189,7 @@ export function calculateMeasurements(
     });
 
     // Calf
-    const calf = distance3D(landmarks[25], landmarks[27]) * scale * 0.5;
+    const calf = distance3D(measureLandmarks[25], measureLandmarks[27]) * scaleFactor * 0.5;
     measurements.push({
       type: 'calf',
       label: MEASUREMENT_LABELS.calf,

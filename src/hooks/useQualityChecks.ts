@@ -42,7 +42,7 @@ export function useQualityChecks(
       : { passed: false, message: 'No pose detected', severity: 'warning' as const };
 
     const distance = checkDistance(landmarks, video.videoHeight);
-    const stability = checkStability(landmarks);
+    const stability = checkStability(landmarks, video.videoWidth, video.videoHeight);
     const lighting = checkLighting(video, canvas);
     const occlusion = checkOcclusion(landmarks, requiredLandmarks);
 
