@@ -9,7 +9,7 @@ function distance3D(p1: PoseLandmark, p2: PoseLandmark): number {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-// Calculate pixel to cm scale using world landmarks (in meters) and user height for calibration
+// Calculate scale factor with improved calibration logic
 function calculateScale(
   worldLandmarks: PoseLandmark[], 
   landmarks: PoseLandmark[],
@@ -17,34 +17,57 @@ function calculateScale(
   frameHeight: number,
   userHeightCm?: number
 ): number {
-  if (!worldLandmarks || worldLandmarks.length === 0) {
-    // Fallback: use normalized coordinates with pixel conversion
-    return frameWidth * 50; // Rough estimation
-  }
-  
-  // If user height is provided, use it for more accurate calibration
-  if (userHeightCm && userHeightCm > 0) {
-    // Calculate full body height from landmarks (nose to ankle)
+  // Priority 1: Use user-provided height for best calibration
+  if (userHeightCm && userHeightCm > 0 && worldLandmarks && worldLandmarks.length > 0) {
     const nose = worldLandmarks[0];
     const leftAnkle = worldLandmarks[27];
     const rightAnkle = worldLandmarks[28];
+    
+    // Use the ankle with better visibility
     const ankle = leftAnkle.visibility > rightAnkle.visibility ? leftAnkle : rightAnkle;
     
-    const measuredHeightMeters = Math.abs(nose.y - ankle.y);
-    if (measuredHeightMeters > 0) {
-      // Scale factor: actual height / measured height
-      return userHeightCm / (measuredHeightMeters * 100);
+    if (ankle.visibility > 0.5) {
+      const measuredHeightMeters = Math.abs(nose.y - ankle.y);
+      if (measuredHeightMeters > 0.5 && measuredHeightMeters < 2.5) { // Sanity check (50cm-250cm)
+        // Direct calibration: user's actual height / measured height
+        const scaleFactor = userHeightCm / (measuredHeightMeters * 100);
+        console.log('Using height calibration:', scaleFactor, 'cm per meter');
+        return scaleFactor;
+      }
     }
   }
   
-  // Use world landmarks (in meters) for accurate scale
-  const leftShoulder = worldLandmarks[11];
-  const leftHip = worldLandmarks[23];
-  const distanceMeters = distance3D(leftShoulder, leftHip);
-  const referenceCm = 50; // Shoulder to hip is ~50cm
+  // Priority 2: Use world landmarks with anatomical references
+  if (worldLandmarks && worldLandmarks.length > 0) {
+    const leftShoulder = worldLandmarks[11];
+    const rightShoulder = worldLandmarks[12];
+    const leftHip = worldLandmarks[23];
+    const rightHip = worldLandmarks[24];
+    
+    // Use shoulder-to-hip distance (more stable than full height)
+    if (leftShoulder.visibility > 0.6 && leftHip.visibility > 0.6) {
+      const torsoLength = distance3D(leftShoulder, leftHip);
+      
+      // Average torso length is ~45-55cm depending on height
+      // Use conservative estimate: 50cm for average adult
+      const estimatedTorsoLengthCm = userHeightCm ? (userHeightCm * 0.3) : 50;
+      
+      if (torsoLength > 0.2 && torsoLength < 0.8) { // Sanity check (20cm-80cm)
+        const scaleFactor = estimatedTorsoLengthCm / (torsoLength * 100);
+        console.log('Using torso calibration:', scaleFactor, 'cm per meter');
+        return scaleFactor;
+      }
+    }
+  }
   
-  // Convert meters to cm
-  return referenceCm / (distanceMeters * 100);
+  // Priority 3: Estimate from frame dimensions and typical human proportions
+  // Assume person fills ~70% of frame height and average height is 170cm
+  const estimatedPersonHeightInFrame = frameHeight * 0.7;
+  const estimatedRealHeightCm = userHeightCm || 170;
+  const pixelsPerCm = estimatedPersonHeightInFrame / estimatedRealHeightCm;
+  
+  console.warn('Using fallback calibration based on frame size');
+  return pixelsPerCm;
 }
 
 export function calculateMeasurements(
@@ -100,9 +123,11 @@ export function calculateMeasurements(
       timestamp
     });
 
-    // Chest (shoulder width + depth estimation)
-    const depthFactor = 1 + Math.abs(measureLandmarks[11].z - measureLandmarks[12].z) / 10;
-    const chest = shoulderWidth * depthFactor * 2.2;
+    // Chest circumference using shoulder width and depth
+    // Account for 3D body shape: chest is roughly circular
+    const shoulderDepth = Math.abs(measureLandmarks[11].z - measureLandmarks[12].z);
+    const estimatedChestDepth = shoulderWidth * 0.7; // Chest depth is ~70% of shoulder width
+    const chest = (shoulderWidth + estimatedChestDepth) * Math.PI / 2; // Semi-ellipse circumference
     measurements.push({
       type: 'chest',
       label: MEASUREMENT_LABELS.chest,
@@ -112,9 +137,10 @@ export function calculateMeasurements(
       timestamp
     });
 
-    // Waist (upper)
+    // Waist circumference - using hip landmarks as proxy
     const waistWidth = distance3D(measureLandmarks[23], measureLandmarks[24]) * scaleFactor;
-    const waist = waistWidth * 2.5;
+    const estimatedWaistDepth = waistWidth * 0.6; // Waist depth is ~60% of width
+    const waist = (waistWidth + estimatedWaistDepth) * Math.PI / 2;
     measurements.push({
       type: 'waist',
       label: MEASUREMENT_LABELS.waist,
@@ -152,9 +178,10 @@ export function calculateMeasurements(
     const measureLandmarks = worldLandmarks.length > 0 ? worldLandmarks : pixelLandmarks;
     const scaleFactor = worldLandmarks.length > 0 ? 100 : scale;
     
-    // Waist (lower)
+    // Waist circumference at hip level
     const waistWidth = distance3D(measureLandmarks[23], measureLandmarks[24]) * scaleFactor;
-    const waist = waistWidth * 2.5;
+    const estimatedWaistDepth = waistWidth * 0.6;
+    const waist = (waistWidth + estimatedWaistDepth) * Math.PI / 2;
     measurements.push({
       type: 'waist_lower',
       label: MEASUREMENT_LABELS.waist_lower,
@@ -164,9 +191,10 @@ export function calculateMeasurements(
       timestamp
     });
 
-    // Hip
+    // Hip circumference - typically wider than waist
     const hipWidth = waistWidth * 1.15;
-    const hip = hipWidth * 2.5;
+    const estimatedHipDepth = hipWidth * 0.7;
+    const hip = (hipWidth + estimatedHipDepth) * Math.PI / 2;
     measurements.push({
       type: 'hip',
       label: MEASUREMENT_LABELS.hip,

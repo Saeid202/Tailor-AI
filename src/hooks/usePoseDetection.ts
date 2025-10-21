@@ -15,21 +15,43 @@ export function usePoseDetection(videoElement: HTMLVideoElement | null) {
     const initializePoseDetection = async () => {
       try {
         console.log('Initializing MediaPipe pose detection...');
+        // Pin to specific version for stability
         const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
         );
 
-        const poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-            delegate: 'GPU'
-          },
-          runningMode: 'VIDEO',
-          numPoses: 1,
-          minPoseDetectionConfidence: 0.5,
-          minPosePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5
-        });
+        // Try GPU first, fallback to CPU if not supported
+        let poseLandmarker: PoseLandmarker | null = null;
+        const modelUrl = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+        
+        try {
+          poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: modelUrl,
+              delegate: 'GPU'
+            },
+            runningMode: 'VIDEO',
+            numPoses: 1,
+            minPoseDetectionConfidence: 0.5,
+            minPosePresenceConfidence: 0.5,
+            minTrackingConfidence: 0.5
+          });
+          console.log('MediaPipe initialized with GPU acceleration');
+        } catch (gpuError) {
+          console.warn('GPU delegate not supported, falling back to CPU:', gpuError);
+          poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: {
+              modelAssetPath: modelUrl,
+              delegate: 'CPU'
+            },
+            runningMode: 'VIDEO',
+            numPoses: 1,
+            minPoseDetectionConfidence: 0.5,
+            minPosePresenceConfidence: 0.5,
+            minTrackingConfidence: 0.5
+          });
+          console.log('MediaPipe initialized with CPU');
+        }
 
         if (mounted) {
           console.log('MediaPipe initialized successfully');
