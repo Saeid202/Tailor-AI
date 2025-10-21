@@ -81,14 +81,14 @@ const heroSlides = [
   {
     id: 'app-demo',
     type: 'video',
-    title: 'See FrameFit AI in Action',
+  title: 'See Tailor AI in Action',
     subtitle: 'Live App Demonstration',
     description: 'Watch how easy it is to get precise measurements using just your camera.',
     badge: 'Live Demo',
     media: {
       src: '/videos/framefit-demo.mp4',
       poster: '/thumbnails/demo-thumbnail.jpg',
-      alt: 'FrameFit AI app demonstration video'
+  alt: 'Tailor AI app demonstration video'
     },
     cta: {
       primary: 'Try It Now',
@@ -105,7 +105,7 @@ const heroSlides = [
     badge: 'High Precision',
     media: {
       src: '/images/measurement-results.jpg',
-      alt: 'FrameFit AI measurement results interface'
+  alt: 'Tailor AI measurement results interface'
     },
     cta: {
       primary: 'Get Started',

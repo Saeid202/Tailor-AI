@@ -29,7 +29,7 @@ export function OnboardingModal({ open, onComplete }: OnboardingModalProps) {
         {step === 1 && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl">Welcome to Frame Fit Measure!</DialogTitle>
+              <DialogTitle className="text-2xl">Welcome to Tailor AI!</DialogTitle>
               <DialogDescription className="text-base">
                 Get accurate body measurements using just your camera
               </DialogDescription>

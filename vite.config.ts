@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'Frame Fit Measure - AI Body Measurements',
-        short_name: 'Frame Fit',
+  name: 'Tailor AI - Body Measurements',
+  short_name: 'Tailor AI',
         description: 'AI-powered body measurement tool for accurate garment sizing',
         theme_color: '#7c3aed',
         background_color: '#ffffff',

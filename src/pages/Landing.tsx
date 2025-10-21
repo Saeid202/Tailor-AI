@@ -21,7 +21,7 @@ export default function Landing() {
         // src: '/path/to/your/app-demo-video.mp4', // Add your video here
         // poster: '/path/to/your/video-thumbnail.jpg', // Video thumbnail
         src: 'https://images.unsplash.com/photo-1611996575749-79a3a250f79e?w=800&h=600&fit=crop', // Placeholder image
-        alt: 'FrameFit AI App Demo'
+  alt: 'Tailor AI App Demo'
       },
       cta: {
         primary: 'Start Measuring',
@@ -146,7 +146,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-muted-foreground mb-4 italic">
-                "FrameFit AI completely changed how I shop online. The measurements are incredibly accurate, and I finally get clothes that fit perfectly every time!"
+                "Tailor AI completely changed how I shop online. The measurements are incredibly accurate, and I finally get clothes that fit perfectly every time!"
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -167,7 +167,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-muted-foreground mb-4 italic">
-                "As a tailor, I was skeptical about AI measurements. But FrameFit's precision rivals my manual measurements. It's now an essential tool for my business."
+                "As a tailor, I was skeptical about AI measurements. But Tailor AI's precision rivals my manual measurements. It's now an essential tool for my business."
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -241,7 +241,7 @@ export default function Landing() {
                 </div>
                 <div className="leading-tight">
                   <span className="block text-xl font-bold tracking-tight">
-                    <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">FrameFit</span>
+                    <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Tailor</span>
                     <span className="ml-1 text-foreground/90 font-light">AI</span>
                   </span>
                 </div>
@@ -329,8 +329,8 @@ export default function Landing() {
                   <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <a href="mailto:hello@framefit.ai" className="text-muted-foreground hover:text-primary transition-colors">
-                      hello@framefit.ai
+                    <a href="mailto:hello@tailor.ai" className="text-muted-foreground hover:text-primary transition-colors">
+                      hello@tailor.ai
                     </a>
                   </div>
                 </div>
@@ -379,7 +379,7 @@ export default function Landing() {
           <div className="border-t border-border py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
-                <p>© 2025 FrameFit AI. All rights reserved.</p>
+                <p>© 2025 Tailor AI. All rights reserved.</p>
                 <div className="flex space-x-4">
                   <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
                   <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>

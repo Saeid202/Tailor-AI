@@ -44,7 +44,7 @@ export function AppHeader({
               >
                 <Sparkles className="h-6 w-6 text-white" />
                 <div className="mb-2 mt-4 text-lg font-medium text-white">
-                  FrameFit AI
+                  Tailor AI
                 </div>
                 <p className="text-sm leading-tight text-white/90">
                   Revolutionizing fashion with AI-powered precision measurements
@@ -96,7 +96,7 @@ export function AppHeader({
               <Mail className="h-5 w-5 text-primary" />
               <div>
                 <p className="font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">hello@framefit.ai</p>
+                <p className="text-sm text-muted-foreground">hello@tailor.ai</p>
               </div>
             </div>
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-muted/50">
@@ -129,7 +129,7 @@ export function AppHeader({
       </div>
       <div className="leading-tight">
         <span className="block text-xl font-bold tracking-tight">
-          <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">FrameFit</span>
+          <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Tailor</span>
           <span className="ml-1 text-foreground/90 font-light">AI</span>
         </span>
         <span className="hidden text-xs text-muted-foreground lg:block font-medium">Precision body measurements</span>
@@ -257,7 +257,7 @@ export function AppHeader({
                   <div className="space-y-3 pl-4 border-l-2 border-primary/20">
                     <div className="flex items-center space-x-2 text-sm">
                       <Mail className="h-4 w-4 text-primary" />
-                      <span>hello@framefit.ai</span>
+                      <span>hello@tailor.ai</span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm">
                       <Phone className="h-4 w-4 text-primary" />
