@@ -15,14 +15,16 @@ export function usePoseDetection(videoElement: HTMLVideoElement | null) {
     const initializePoseDetection = async () => {
       try {
         console.log('Initializing MediaPipe pose detection...');
-        // Pin to specific version for stability
+        
+        // Use installed package version
         const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm'
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm'
         );
 
+        const modelUrl = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
+        
         // Try GPU first, fallback to CPU if not supported
         let poseLandmarker: PoseLandmarker | null = null;
-        const modelUrl = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
         
         try {
           poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
@@ -38,7 +40,7 @@ export function usePoseDetection(videoElement: HTMLVideoElement | null) {
           });
           console.log('MediaPipe initialized with GPU acceleration');
         } catch (gpuError) {
-          console.warn('GPU delegate not supported, falling back to CPU:', gpuError);
+          console.warn('GPU delegate not supported, falling back to CPU');
           poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
             baseOptions: {
               modelAssetPath: modelUrl,
