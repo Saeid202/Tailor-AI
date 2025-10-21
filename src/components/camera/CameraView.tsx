@@ -13,7 +13,8 @@ import { averageMeasurements } from '@/lib/utils/measurementAveraging';
 import { Measurement } from '@/types/measurements';
 import { GARMENT_CONFIGS } from '@/types/garment';
 import { CaptureProgress } from './CaptureProgress';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Video, VideoOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CameraViewProps {
   garmentType: GarmentType;
@@ -26,6 +27,7 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
   const [measurementBuffer, setMeasurementBuffer] = useState<Measurement[][]>([]);
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const lastUpdateRef = useRef<number>(0);
 
   const config = GARMENT_CONFIGS[garmentType];
@@ -108,51 +110,84 @@ export function CameraView({ garmentType, unit, onCapture }: CameraViewProps) {
   }
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
-      <Webcam
-        ref={webcamRef}
-        videoConstraints={{
-          width: 1280,
-          height: 720,
-          facingMode: 'user'
-        }}
-        className="absolute inset-0 w-full h-full object-cover"
-        onLoadedMetadata={() => {
-          const video = webcamRef.current?.video;
-          if (video) {
-            console.log('Webcam loaded:', video.readyState, video.videoWidth);
-            setVideoElement(video);
-          }
-        }}
-      />
-
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="text-center text-white">
-            <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
-            <p>Loading pose detection...</p>
+    <div className="relative w-full h-full bg-black overflow-hidden flex flex-col">
+      <div className="relative flex-1">
+        {isCameraActive ? (
+          <Webcam
+            ref={webcamRef}
+            videoConstraints={{
+              width: 1280,
+              height: 720,
+              facingMode: 'user'
+            }}
+            className="absolute inset-0 w-full h-full object-cover"
+            onLoadedMetadata={() => {
+              const video = webcamRef.current?.video;
+              if (video) {
+                console.log('Webcam loaded:', video.readyState, video.videoWidth);
+                setVideoElement(video);
+              }
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/90">
+            <div className="text-center text-white">
+              <VideoOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">Camera is stopped</p>
+              <p className="text-sm text-white/60 mt-2">Click Start Camera to begin</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!isLoading && (
-        <>
-          <AvatarOverlay garmentType={garmentType} />
-          {poseResult && videoElement && (
-            <PoseLandmarksOverlay 
-              landmarks={poseResult.landmarks}
-              videoWidth={videoElement.videoWidth}
-              videoHeight={videoElement.videoHeight}
-            />
-          )}
-          <QualityIndicators qualityGates={qualityGates} />
-          <MeasurementChips measurements={liveMeasurements} />
+        {isCameraActive && isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="text-center text-white">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+              <p>Loading pose detection...</p>
+            </div>
+          </div>
+        )}
 
-          {countdown !== null && (
-            <CaptureProgress countdown={countdown} progress={progress} />
+        {isCameraActive && !isLoading && (
+          <>
+            <AvatarOverlay garmentType={garmentType} />
+            {poseResult && videoElement && (
+              <PoseLandmarksOverlay 
+                landmarks={poseResult.landmarks}
+                videoWidth={videoElement.videoWidth}
+                videoHeight={videoElement.videoHeight}
+              />
+            )}
+            <QualityIndicators qualityGates={qualityGates} />
+            <MeasurementChips measurements={liveMeasurements} />
+
+            {countdown !== null && (
+              <CaptureProgress countdown={countdown} progress={progress} />
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="p-4 bg-black/80 backdrop-blur-sm">
+        <Button
+          onClick={() => setIsCameraActive(!isCameraActive)}
+          size="lg"
+          className="w-full"
+          variant={isCameraActive ? "destructive" : "default"}
+        >
+          {isCameraActive ? (
+            <>
+              <VideoOff className="mr-2" />
+              Stop Camera
+            </>
+          ) : (
+            <>
+              <Video className="mr-2" />
+              Start Camera
+            </>
           )}
-        </>
-      )}
+        </Button>
+      </div>
     </div>
   );
 }
