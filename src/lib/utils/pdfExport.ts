@@ -1,0 +1,183 @@
+import { MeasurementResult } from '@/types/measurements';
+
+export async function exportMeasurementsAsPDF(result: MeasurementResult) {
+  // Create HTML content for PDF
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Body Measurements - ${result.garmentType}</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 40px 20px;
+          color: #1a1a1a;
+        }
+        h1 {
+          color: #7c3aed;
+          margin-bottom: 10px;
+        }
+        .header {
+          border-bottom: 3px solid #7c3aed;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .date {
+          color: #666;
+          font-size: 14px;
+        }
+        .garment-type {
+          background: #f3f4f6;
+          padding: 10px 20px;
+          border-radius: 8px;
+          display: inline-block;
+          margin: 20px 0;
+          text-transform: capitalize;
+          font-weight: 600;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 30px 0;
+        }
+        th, td {
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+          background: #f9fafb;
+          font-weight: 600;
+          color: #374151;
+        }
+        tr:hover {
+          background: #f9fafb;
+        }
+        .confidence {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .confidence-high {
+          background: #d1fae5;
+          color: #065f46;
+        }
+        .confidence-medium {
+          background: #fef3c7;
+          color: #92400e;
+        }
+        .confidence-low {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+        .image-container {
+          margin: 30px 0;
+          text-align: center;
+        }
+        .image-container img {
+          max-width: 100%;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .footer {
+          margin-top: 50px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          text-align: center;
+          color: #6b7280;
+          font-size: 12px;
+        }
+        .tips {
+          background: #eff6ff;
+          border-left: 4px solid #3b82f6;
+          padding: 15px 20px;
+          margin: 30px 0;
+        }
+        .tips h3 {
+          margin-top: 0;
+          color: #1e40af;
+        }
+        .tips ul {
+          margin: 10px 0;
+          padding-left: 20px;
+        }
+        .tips li {
+          margin: 5px 0;
+          color: #1e3a8a;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Body Measurements Report</h1>
+        <div class="date">Generated on ${result.capturedAt.toLocaleDateString()} at ${result.capturedAt.toLocaleTimeString()}</div>
+        <div class="garment-type">${result.garmentType}</div>
+      </div>
+
+      ${result.imageDataUrl ? `
+      <div class="image-container">
+        <img src="${result.imageDataUrl}" alt="Captured pose" />
+      </div>
+      ` : ''}
+
+      <h2>Your Measurements</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Measurement</th>
+            <th>Value</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${result.measurements.map(m => {
+            const confidenceClass = m.confidence >= 0.8 ? 'confidence-high' : 
+                                   m.confidence >= 0.6 ? 'confidence-medium' : 'confidence-low';
+            const confidenceLabel = m.confidence >= 0.8 ? 'High' : 
+                                   m.confidence >= 0.6 ? 'Medium' : 'Low';
+            return `
+            <tr>
+              <td><strong>${m.label}</strong></td>
+              <td>${m.value.toFixed(1)} ${m.unit}</td>
+              <td><span class="confidence ${confidenceClass}">${confidenceLabel}</span></td>
+            </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <div class="tips">
+        <h3>📏 How to Use These Measurements</h3>
+        <ul>
+          <li><strong>Shoulder Width:</strong> Measure across the back from shoulder point to shoulder point</li>
+          <li><strong>Chest:</strong> Measure around the fullest part of your chest</li>
+          <li><strong>Waist:</strong> Measure around your natural waistline</li>
+          <li><strong>Sleeve Length:</strong> From shoulder to wrist with arm slightly bent</li>
+          <li><strong>Inseam:</strong> From crotch to ankle along the inside of the leg</li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <p>Generated by Frame Fit Measure - AI-Powered Body Measurement</p>
+        <p>For best results, compare these measurements with size charts from your preferred brands</p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Create a blob and download
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `measurements-${result.garmentType}-${Date.now()}.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
