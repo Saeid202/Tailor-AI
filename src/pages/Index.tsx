@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { DebugAuth } from '@/components/DebugAuth';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,7 +27,6 @@ const Index = () => {
       <div className="text-center space-y-4">
         <h1 className="text-2xl font-bold mb-4">Welcome to Tailor AI!</h1>
         <p className="text-muted-foreground mb-4">You are successfully authenticated as: {user.email}</p>
-        <DebugAuth />
         <Button onClick={() => navigate('/')}>Back to Home</Button>
       </div>
     </div>
