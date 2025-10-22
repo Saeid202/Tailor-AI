@@ -136,9 +136,40 @@ export const CameraView = forwardRef<CameraViewHandle, CameraViewProps>(function
   }
 
   return (
-    <div className="w-full h-full bg-black relative">
+    <div 
+      className="w-full h-full bg-black relative cursor-pointer select-none"
+      onClick={() => setIsCameraActive(!isCameraActive)}
+    >
+      {/* Click to start/stop overlay */}
+      {!isCameraActive && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10 transition-all duration-300 hover:bg-black/70">
+          <div className="text-center text-white">
+            <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-300 hover:bg-white/20 hover:scale-110">
+              <Video className="w-10 h-10" />
+            </div>
+            <p className="text-xl font-semibold mb-2">Click to Start Camera</p>
+            <p className="text-sm text-white/70">Begin your measurement session</p>
+          </div>
+        </div>
+      )}
+
+      {/* Active camera recording indicator */}
+      {isCameraActive && (
+        <div className="absolute top-4 right-4 z-20">
+          <div className="bg-red-500/90 backdrop-blur-sm rounded-full px-3 py-2 flex items-center space-x-2 transition-all duration-300 hover:bg-red-500">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span className="text-white text-sm font-medium">Recording</span>
+          </div>
+        </div>
+      )}
+
+      {/* Click to stop overlay when active */}
+      {isCameraActive && (
+        <div className="absolute inset-0 z-5 hover:bg-black/10 transition-all duration-300" />
+      )}
+
       {/* Camera Content Area */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0">\
         {isCameraActive ? (
           <Webcam
             ref={webcamRef}
@@ -157,11 +188,10 @@ export const CameraView = forwardRef<CameraViewHandle, CameraViewProps>(function
             }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <div className="text-center text-white">
-              <VideoOff className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">Camera is stopped</p>
-              <p className="text-sm text-white/60 mt-2">Use the button below to start</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="text-center text-white/50">
+              <VideoOff className="w-12 h-12 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Camera Stopped</p>
             </div>
           </div>
         )}
