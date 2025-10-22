@@ -9,7 +9,17 @@ import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 
-const queryClient = new QueryClient();
+// Create QueryClient with HMR stability
+let queryClient = new QueryClient();
+
+// Preserve queryClient across HMR to prevent dispatcher errors
+if (import.meta.hot) {
+  if (!import.meta.hot.data.queryClient) {
+    import.meta.hot.data.queryClient = queryClient;
+  } else {
+    queryClient = import.meta.hot.data.queryClient;
+  }
+}
 
 const AppContent = () => {
   return (
