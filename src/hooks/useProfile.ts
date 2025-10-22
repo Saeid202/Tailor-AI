@@ -38,9 +38,36 @@ export function useProfile() {
         .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+      
+      // If no profile exists, create one
+      if (!data) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            preferred_unit: 'cm',
+            onboarding_completed: false
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        setProfile(newProfile);
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error with profile:', error);
+      // Set a default profile if there's an error
+      setProfile({
+        id: 'temp',
+        user_id: user.id,
+        height_cm: null,
+        preferred_unit: 'cm',
+        onboarding_completed: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
     } finally {
       setLoading(false);
     }

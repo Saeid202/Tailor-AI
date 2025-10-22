@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Ruler, Menu, ArrowRight, Phone, Mail, MapPin, Sparkles, Zap, Camera, BarChart3 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Ruler, Menu, ArrowRight, Phone, Mail, MapPin, Sparkles, Zap, Camera, BarChart3, User, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
   variant?: 'landing' | 'app';
@@ -14,6 +17,11 @@ interface HeaderProps {
 export function Header({ variant = 'landing', className }: HeaderProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const getUserInitials = (email: string) => {
+    return email.charAt(0).toUpperCase();
+  };
 
   const navigationItems = [
     {
@@ -99,10 +107,6 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
                 <p className="text-sm text-muted-foreground">San Francisco, CA</p>
               </div>
             </div>
-            <Button className="w-full mt-4" onClick={() => navigate('/app')}>
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
           </div>
         </div>
       )
@@ -115,14 +119,14 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shadow-primary/25 ring-1 ring-primary/20">
           <Ruler className="h-5 w-5 text-primary-foreground" />
         </div>
-        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gradient-to-r from-orange-400 to-red-400 animate-pulse" />
+        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 animate-pulse" />
       </div>
       <div className="leading-tight">
         <span className="block text-xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Tailor</span>
           <span className="ml-1 text-foreground/90 font-light">AI</span>
         </span>
-        <span className="hidden text-xs text-muted-foreground md:block font-medium">Precision body measurements</span>
+        <span className="hidden text-xs text-muted-foreground lg:block font-medium">Precision body measurements</span>
       </div>
     </div>
   );
@@ -144,6 +148,61 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
     </NavigationMenu>
   );
 
+  const AuthActions = () => {
+    if (user) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                <AvatarFallback>{getUserInitials(user.email || '')}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'User'}</p>
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/app')}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Dashboard</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <>
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/auth')}
+          className="hidden sm:inline-flex text-sm font-medium hover:bg-accent/50 transition-all duration-200"
+        >
+          Sign In
+        </Button>
+        <Button
+          onClick={() => navigate('/auth')}
+          className="rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 h-10 px-6 font-medium"
+        >
+          <span className="hidden sm:inline">Get Started</span>
+          <span className="sm:hidden">Start</span>
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </>
+    );
+  };
+
   const MobileNavigation = () => (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -155,6 +214,30 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
       <SheetContent side="right" className="w-[300px] sm:w-[400px]">
         <div className="flex flex-col space-y-6 mt-6">
           <Brand />
+          
+          {user && (
+            <div className="space-y-3 border-b pb-4">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                  <AvatarFallback>{getUserInitials(user.email || '')}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{user.user_metadata?.full_name || 'User'}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => { navigate('/app'); setIsOpen(false); }}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Dashboard
+              </Button>
+            </div>
+          )}
+
           <nav className="flex flex-col space-y-4">
             {navigationItems.map((item) => (
               <div key={item.title} className="space-y-3">
@@ -175,40 +258,38 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
               </div>
             ))}
           </nav>
-          <div className="pt-6 border-t">
-            <Button className="w-full" onClick={() => { navigate('/app'); setIsOpen(false); }}>
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
+          
+          {user ? (
+            <div className="pt-6 border-t space-y-3">
+              <Button 
+                variant="destructive" 
+                className="w-full justify-start" 
+                onClick={() => { signOut(); setIsOpen(false); }}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <div className="pt-6 border-t space-y-3">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => { navigate('/auth'); setIsOpen(false); }}
+              >
+                Sign In
+              </Button>
+              <Button 
+                className="w-full justify-start" 
+                onClick={() => { navigate('/auth'); setIsOpen(false); }}
+              >
+                Get Started
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
-  );
-
-  const Actions = () => (
-    <div className="flex items-center gap-3">
-      {variant === 'landing' && (
-        <>
-          <Button
-            variant="ghost"
-            className="hidden sm:flex font-medium hover:bg-accent/50 transition-all duration-200"
-            onClick={() => navigate('/auth')}
-          >
-            Sign In
-          </Button>
-          <Button
-            onClick={() => navigate('/app')}
-            className="rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:from-primary/90 hover:to-primary/70 transition-all duration-300 h-10 px-6 font-medium"
-          >
-            <span className="hidden sm:inline">Get Started</span>
-            <span className="sm:hidden">Start</span>
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </>
-      )}
-      <MobileNavigation />
-    </div>
   );
 
   return (
@@ -221,7 +302,10 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
         <div className="flex h-16 items-center justify-between">
           <Brand />
           <DesktopNavigation />
-          <Actions />
+          <div className="flex items-center gap-3">
+            <AuthActions />
+            <MobileNavigation />
+          </div>
         </div>
       </div>
     </header>

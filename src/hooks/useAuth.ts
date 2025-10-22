@@ -9,9 +9,11 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Setting up auth state listener...');
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -20,6 +22,7 @@ export function useAuth() {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -52,6 +55,7 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in...', email);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -59,9 +63,11 @@ export function useAuth() {
 
       if (error) throw error;
       
+      console.log('Sign in successful');
       toast.success('Welcome back!');
       return { error: null };
     } catch (error: any) {
+      console.error('Sign in error:', error);
       toast.error(error.message || 'Failed to sign in');
       return { error };
     }

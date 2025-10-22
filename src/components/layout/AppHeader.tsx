@@ -6,13 +6,13 @@ import { Ruler, Menu, ArrowRight, Phone, Mail, MapPin, Sparkles, Zap, Camera, Ba
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { HelpModal } from '@/components/ui/HelpModal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AppHeaderProps {
   stage: string;
   onBackToCamera: () => void;
   onViewHistory: () => void;
   onViewAnalytics: () => void;
-  onSignOut: () => void;
   hasMeasurements: boolean;
   className?: string;
 }
@@ -22,12 +22,12 @@ export function AppHeader({
   onBackToCamera, 
   onViewHistory, 
   onViewAnalytics, 
-  onSignOut,
   hasMeasurements,
   className 
 }: AppHeaderProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const { signOut } = useAuth();
 
   const navigationItems = [
     {
@@ -193,7 +193,7 @@ export function AppHeader({
       <Button 
         variant="ghost" 
         size="icon" 
-        onClick={onSignOut}
+        onClick={signOut}
         className="hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
       >
         <LogOut className="w-4 h-4" />
@@ -273,7 +273,7 @@ export function AppHeader({
             <Button 
               variant="destructive" 
               className="w-full justify-start" 
-              onClick={() => { onSignOut(); setIsOpen(false); }}
+              onClick={() => { signOut(); setIsOpen(false); }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
