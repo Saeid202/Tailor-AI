@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GarmentType } from '@/types/garment';
 import { Measurement, MeasurementResult } from '@/types/measurements';
 import { GarmentTabs } from '@/components/layout/GarmentTabs';
@@ -25,11 +26,18 @@ import { VisualStep } from '@/components/workflow/steps/VisualStep';
 import { VirtualFitStep } from '@/components/workflow/steps/VirtualFitStep';
 import { ReviewExportStep } from '@/components/workflow/steps/ReviewExportStep';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useMeasurements } from '@/hooks/useMeasurements';
 
 type Stage = 'camera' | 'results' | 'history' | 'analytics';
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { profile, loading: profileLoading, updateProfile } = useProfile();
+  const { measurements, loading: measurementsLoading, saveMeasurement, deleteMeasurement } = useMeasurements();
 
   const [garmentType, setGarmentType] = useState<GarmentType>('shirt');
   const [stage, setStage] = useState<Stage>('camera');
@@ -37,44 +45,38 @@ const Index = () => {
   const [result, setResult] = useState<MeasurementResult | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [measurements, setMeasurements] = useState<MeasurementResult[]>([]);
-  const [userHeight, setUserHeight] = useState<number | undefined>(undefined);
 
-  // Load data from localStorage on mount
+  // Redirect to auth if not authenticated
   useEffect(() => {
-    const savedUnit = localStorage.getItem('preferredUnit') as 'cm' | 'in' | null;
-    const savedHeight = localStorage.getItem('userHeight');
-    const savedMeasurements = localStorage.getItem('measurements');
-    const onboardingCompleted = localStorage.getItem('onboardingCompleted');
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
 
-    if (savedUnit) setUnit(savedUnit);
-    if (savedHeight) setUserHeight(parseFloat(savedHeight));
-    if (savedMeasurements) {
-      try {
-        const parsed = JSON.parse(savedMeasurements);
-        // Convert date strings back to Date objects
-        const converted = parsed.map((m: any) => ({
-          ...m,
-          capturedAt: new Date(m.capturedAt)
-        }));
-        setMeasurements(converted);
-      } catch (e) {
-        console.error('Error parsing saved measurements:', e);
+  // Load profile data and show onboarding if needed
+  useEffect(() => {
+    if (profile) {
+      setUnit(profile.preferred_unit as 'cm' | 'in');
+      if (!profile.onboarding_completed) {
+        setTimeout(() => setShowOnboarding(true), 500);
       }
     }
+  }, [profile]);
 
-    if (!onboardingCompleted) {
-      setTimeout(() => setShowOnboarding(true), 500);
-    }
-  }, []);
+  if (authLoading || profileLoading || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
-  const handleOnboardingComplete = (height: number, preferredUnit: 'cm' | 'in') => {
-    setUserHeight(height);
+  const handleOnboardingComplete = async (height: number, preferredUnit: 'cm' | 'in') => {
     setUnit(preferredUnit);
     setShowOnboarding(false);
-    localStorage.setItem('userHeight', height.toString());
-    localStorage.setItem('preferredUnit', preferredUnit);
-    localStorage.setItem('onboardingCompleted', 'true');
+    
+    await updateProfile({
+      height_cm: height,
+      preferred_unit: preferredUnit,
+      onboarding_completed: true,
+    });
+    
     toast({ title: 'Profile updated successfully' });
   };
 
@@ -96,10 +98,11 @@ const Index = () => {
     resetStabilityHistory();
   };
 
-  const handleToggleUnit = () => {
+  const handleToggleUnit = async () => {
     const newUnit: 'cm' | 'in' = unit === 'cm' ? 'in' : 'cm';
     setUnit(newUnit);
-    localStorage.setItem('preferredUnit', newUnit);
+    
+    await updateProfile({ preferred_unit: newUnit });
 
     if (result) {
       const convertedMeasurements: Measurement[] = result.measurements.map(m => ({
@@ -121,11 +124,9 @@ const Index = () => {
     resetStabilityHistory();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (result) {
-      const updatedMeasurements = [result, ...measurements];
-      setMeasurements(updatedMeasurements);
-      localStorage.setItem('measurements', JSON.stringify(updatedMeasurements));
+      await saveMeasurement(result);
       toast({ title: 'Measurement saved successfully' });
     }
   };
@@ -144,24 +145,21 @@ const Index = () => {
     setResult(null);
   };
 
-  const handleDeleteMeasurement = (capturedAt: Date) => {
-    const updatedMeasurements = measurements.filter(m => m.capturedAt.getTime() !== capturedAt.getTime());
-    setMeasurements(updatedMeasurements);
-    localStorage.setItem('measurements', JSON.stringify(updatedMeasurements));
-    toast({ title: 'Measurement deleted successfully' });
+  const handleDeleteMeasurement = async (capturedAt: Date) => {
+    const index = measurements.findIndex(m => m.capturedAt.getTime() === capturedAt.getTime());
+    if (index !== -1) {
+      await deleteMeasurement(index);
+      toast({ title: 'Measurement deleted successfully' });
+    }
   };
 
   const handleViewAnalytics = () => {
     setStage('analytics');
   };
 
-  const handleSignOut = () => {
-    // Clear all data
-    localStorage.clear();
-    setMeasurements([]);
-    setUserHeight(undefined);
-    setShowOnboarding(true);
-    toast({ title: 'Data cleared successfully' });
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   // camera control via ref signal
@@ -215,7 +213,7 @@ const Index = () => {
           unit={unit}
           onCapture={onCaptureProxy}
           onLiveMeasurements={setLiveMeasurements}
-          userHeightCm={userHeight}
+          userHeightCm={profile?.height_cm || undefined}
         />
       </div>
     );

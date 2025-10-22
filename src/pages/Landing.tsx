@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { HeroSlider } from '@/components/ui/hero-slider';
 import { OnlineStore } from '@/components/store/OnlineStore';
-import { ArrowRight, Ruler, Smartphone, Zap, CheckCircle, Camera, BarChart3, Users, Star, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube, Github, Linkedin } from 'lucide-react';
+import { ArrowRight, Ruler, Smartphone, Zap, CheckCircle, Camera, BarChart3, Users, Star, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube, Github, Linkedin, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Landing() {
