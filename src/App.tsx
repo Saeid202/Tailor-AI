@@ -23,17 +23,17 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <QueryClientProvider client={queryClient}>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
       <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <AppContent />
-        </TooltipProvider>
+        </BrowserRouter>
       </CartProvider>
-    </QueryClientProvider>
-  </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
 );
 
 export default App;
