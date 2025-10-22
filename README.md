@@ -1,18 +1,14 @@
-# Welcome to your Lovable project
+# Tailor AI — Frontend (Vite + React)
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/bc0e341f-0bc4-404e-aaa1-fd00d719a115
+This repo contains the Tailor AI web app (landing, workflow, camera, store) built with Vite, React, TypeScript, Tailwind, and shadcn/ui.
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/bc0e341f-0bc4-404e-aaa1-fd00d719a115) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
+## Getting started
 
 **Use your preferred IDE**
 
@@ -24,7 +20,7 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Saeid202/Tailor-AI.git
 
 # Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
@@ -50,24 +46,48 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## Supabase setup
 
-This project is built with:
+1) Create a Supabase project. Copy your Project URL and anon (publishable) key.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+2) Configure env vars (create `.env.local` or use the provided `.env.example`):
 
-## How can I deploy this project?
+```
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_ANON_KEY
+```
 
-Simply open [Lovable](https://lovable.dev/projects/bc0e341f-0bc4-404e-aaa1-fd00d719a115) and click on Share -> Publish.
+3) Apply database schema and policies:
 
-## Can I connect a custom domain to my Lovable project?
+- In the Supabase SQL Editor, run the migration file at `supabase/migrations/20251022090000_tailor_ai_core.sql`.
+- This creates profiles, measurements, catalog, carts/orders, social tables, enables RLS, and sets storage buckets/policies.
 
-Yes, you can!
+4) Storage buckets:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Buckets created by the migration: `product-images` (public), `pattern-assets` (public), `captures` (private)
+- Upload assets to these buckets in the Storage UI.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+5) Client usage:
+
+- Supabase client: `src/integrations/supabase/client.ts`
+- API helpers:
+	- Catalog: `src/integrations/supabase/catalog.ts`
+	- Cart: `src/integrations/supabase/cart.ts`
+	- Measurements: `src/integrations/supabase/measurements.ts`
+
+Replace any mock data fetches in components with these helpers.
+
+## Deploy
+
+- Vercel (recommended). Add environment variables above to project settings.
+- For social previews, `index.html` points to `/api/og` which serves a dynamic PNG (Node Function) for rich link cards.
+
+## Tech
+
+- Vite, React, TypeScript
+- Tailwind CSS, shadcn/ui
+- Supabase (auth, Postgres, storage)
+ 
+---
+
+If you need help wiring specific components (store, camera measurements) to Supabase, open an issue or ask in chat.
