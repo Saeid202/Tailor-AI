@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GarmentType } from '@/types/garment';
 import { Measurement, MeasurementResult } from '@/types/measurements';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useMeasurements } from '@/hooks/useMeasurements';
 import { GarmentTabs } from '@/components/layout/GarmentTabs';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { CameraView } from '@/components/camera/CameraView';
@@ -16,7 +20,6 @@ import { resetStabilityHistory } from '@/lib/quality/stabilityCheck';
 import { WorkflowProvider } from '@/contexts/WorkflowContext';
 import { WorkflowNav } from '@/components/workflow/WorkflowNav';
 import { BottomActionBar } from '@/components/workflow/BottomActionBar';
-import { useRef } from 'react';
 import { useWorkflow, Step } from '@/contexts/WorkflowContext';
 import { GarmentStep } from '@/components/workflow/steps/GarmentStep';
 import { MeasurementStep } from '@/components/workflow/steps/MeasurementStep';
@@ -29,84 +32,39 @@ import { useToast } from '@/hooks/use-toast';
 
 type Stage = 'camera' | 'results' | 'history' | 'analytics';
 
-interface Profile {
-  height_cm: number | null;
-  preferred_unit: 'cm' | 'in';
-  onboarding_completed: boolean;
-}
-
-const STORAGE_KEYS = {
-  MEASUREMENTS: 'tailor_measurements',
-  PROFILE: 'tailor_profile',
-};
-
 const Index = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { profile, loading: profileLoading, completeOnboarding } = useProfile(user?.id);
+  const { measurements, loading: measurementsLoading, saveMeasurement, deleteMeasurement } = useMeasurements(user?.id);
+
   const [garmentType, setGarmentType] = useState<GarmentType>('shirt');
   const [stage, setStage] = useState<Stage>('camera');
   const [unit, setUnit] = useState<'cm' | 'in'>('cm');
   const [result, setResult] = useState<MeasurementResult | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
-  const [measurements, setMeasurements] = useState<MeasurementResult[]>([]);
-  const [profile, setProfile] = useState<Profile>({
-    height_cm: null,
-    preferred_unit: 'cm',
-    onboarding_completed: false,
-  });
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Load data from localStorage on mount
+  // Redirect to auth if not logged in
   useEffect(() => {
-    const storedMeasurements = localStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
-    const storedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
 
-    if (storedMeasurements) {
-      try {
-        const parsed = JSON.parse(storedMeasurements);
-        setMeasurements(parsed.map((m: any) => ({
-          ...m,
-          capturedAt: new Date(m.capturedAt),
-        })));
-      } catch (e) {
-        console.error('Failed to load measurements:', e);
+  // Set unit from profile and check onboarding
+  useEffect(() => {
+    if (profile) {
+      setUnit(profile.preferred_unit as 'cm' | 'in');
+      if (!profile.onboarding_completed) {
+        setTimeout(() => setShowOnboarding(true), 500);
       }
     }
+  }, [profile]);
 
-    if (storedProfile) {
-      try {
-        const parsed = JSON.parse(storedProfile);
-        setProfile(parsed);
-        setUnit(parsed.preferred_unit);
-      } catch (e) {
-        console.error('Failed to load profile:', e);
-      }
-    }
-
-    // Show onboarding for new users
-    if (!storedProfile || !JSON.parse(storedProfile).onboarding_completed) {
-      setTimeout(() => setShowOnboarding(true), 500);
-    }
-  }, []);
-
-  // Save measurements to localStorage
-  const saveMeasurementsToStorage = (newMeasurements: MeasurementResult[]) => {
-    localStorage.setItem(STORAGE_KEYS.MEASUREMENTS, JSON.stringify(newMeasurements));
-    setMeasurements(newMeasurements);
-  };
-
-  // Save profile to localStorage
-  const saveProfileToStorage = (newProfile: Profile) => {
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(newProfile));
-    setProfile(newProfile);
-  };
-
-  const handleOnboardingComplete = (height: number, preferredUnit: 'cm' | 'in') => {
-    const newProfile = {
-      height_cm: height > 0 ? height : null,
-      preferred_unit: preferredUnit,
-      onboarding_completed: true,
-    };
-    saveProfileToStorage(newProfile);
+  const handleOnboardingComplete = async (height: number, preferredUnit: 'cm' | 'in') => {
+    await completeOnboarding(height, preferredUnit);
     setUnit(preferredUnit);
     setShowOnboarding(false);
   };
@@ -153,14 +111,9 @@ const Index = () => {
     resetStabilityHistory();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (result) {
-      const newMeasurements = [result, ...measurements];
-      saveMeasurementsToStorage(newMeasurements);
-      toast({
-        title: 'Measurement saved',
-        description: 'Your measurements have been saved successfully.',
-      });
+      await saveMeasurement(result);
     }
   };
 
@@ -178,19 +131,20 @@ const Index = () => {
     setResult(null);
   };
 
-  const handleDeleteMeasurement = (capturedAt: Date) => {
-    const newMeasurements = measurements.filter(
-      m => m.capturedAt.getTime() !== capturedAt.getTime()
-    );
-    saveMeasurementsToStorage(newMeasurements);
-    toast({
-      title: 'Measurement deleted',
-      description: 'The measurement has been removed.',
-    });
+  const handleDeleteMeasurement = async (index: number) => {
+    const measurement = measurements[index];
+    if (measurement) {
+      await deleteMeasurement(measurement.id);
+    }
   };
 
   const handleViewAnalytics = () => {
     setStage('analytics');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   // camera control via ref signal
@@ -250,6 +204,26 @@ const Index = () => {
     );
   }
 
+  // Show loading state
+  if (authLoading || profileLoading || measurementsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Convert Supabase measurements to MeasurementResult format
+  const measurementResults: MeasurementResult[] = measurements.map(m => ({
+    garmentType: m.garment_type,
+    measurements: Array.isArray(m.measurements) ? m.measurements : [],
+    capturedAt: new Date(m.created_at),
+    imageDataUrl: m.image_url || undefined
+  }));
+
   return (
     <WorkflowProvider>
     <div className="flex flex-col h-screen bg-gradient-to-br from-background via-muted/5 to-muted/10">
@@ -264,7 +238,7 @@ const Index = () => {
         onBackToCamera={handleBackToCamera}
         onViewHistory={handleViewHistory}
         onViewAnalytics={handleViewAnalytics}
-        onSignOut={() => {}} // No-op since no auth
+        onSignOut={handleSignOut}
         hasMeasurements={measurements.length > 0}
       />
 
@@ -400,13 +374,13 @@ const Index = () => {
                     {measurements.slice(0, 3).map((measurement, index) => (
                       <div key={index} className="p-3 rounded-lg bg-muted/30 border border-border/30">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium capitalize">{measurement.garmentType}</span>
+                          <span className="text-sm font-medium capitalize">{measurement.garment_type}</span>
                           <span className="text-xs text-muted-foreground">
-                            {new Date(measurement.capturedAt).toLocaleDateString()}
+                            {new Date(measurement.created_at).toLocaleDateString()}
                           </span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {measurement.measurements.length} measurements
+                          {Array.isArray(measurement.measurements) ? measurement.measurements.length : 0} measurements
                         </div>
                       </div>
                     ))}
@@ -434,78 +408,59 @@ const Index = () => {
               {/* Quick Tips */}
               <div className="p-6 flex-1">
                 <h3 className="text-lg font-semibold mb-4 text-foreground">Pro Tips</h3>
-                <div className="space-y-4 text-sm text-muted-foreground">
-                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                    <p className="font-medium text-primary mb-1">Better Accuracy</p>
-                    <p>Wear fitted clothing for more precise measurements</p>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <p>Better lighting improves measurement accuracy</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                    <p className="font-medium text-primary mb-1">Consistent Results</p>
-                    <p>Take measurements at the same time of day</p>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <p>Wear form-fitting clothes for best results</p>
                   </div>
-                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                    <p className="font-medium text-primary mb-1">Perfect Lighting</p>
-                    <p>Natural daylight works best for pose detection</p>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <p>Keep your phone steady during measurement</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary">•</span>
+                    <p>Take measurements in the morning for consistency</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         ) : stage === 'results' && result ? (
-          <div className="w-full h-full overflow-auto bg-gradient-to-br from-background via-muted/5 to-muted/10 p-6">
-            <div className="max-w-4xl mx-auto">
-              <ResultsScreen
-                result={result}
-                onRetake={handleRetake}
-                onToggleUnit={handleToggleUnit}
-                currentUnit={unit}
-                onSave={handleSave}
-              />
-            </div>
-          </div>
+          <ResultsScreen
+            result={result}
+            currentUnit={unit}
+            onRetake={handleRetake}
+            onSave={handleSave}
+            onToggleUnit={handleToggleUnit}
+          />
         ) : stage === 'history' ? (
-          <div className="w-full h-full overflow-auto bg-gradient-to-br from-background via-muted/5 to-muted/10 p-6">
-            <div className="max-w-6xl mx-auto">
-              <HistoryView
-                measurements={measurements}
-                onView={handleViewMeasurement}
-                onDelete={handleDeleteMeasurement}
-                loading={false}
-              />
-            </div>
-          </div>
-        ) : stage === 'analytics' ? (
-          <div className="w-full h-full overflow-auto bg-gradient-to-br from-background via-muted/5 to-muted/10 p-6">
-            <div className="max-w-7xl mx-auto">
-              <MeasurementAnalytics
-                measurements={measurements}
-              />
-            </div>
+          <HistoryView
+            measurements={measurementResults}
+            onView={handleViewMeasurement}
+            onDelete={(capturedAt: Date) => {
+              const index = measurementResults.findIndex(m => m.capturedAt.getTime() === capturedAt.getTime());
+              if (index !== -1) handleDeleteMeasurement(index);
+            }}
+            loading={false}
+          />
+        ) : stage === 'analytics' && measurements.length > 0 ? (
+          <div className="container mx-auto px-4 py-8">
+            <MeasurementAnalytics 
+              measurements={measurementResults}
+            />
           </div>
         ) : null}
       </main>
 
-      {/* Workflow Bottom bar */}
-      <ActionBarWithExport onStartCamera={handleStartCameraFromBar} />
+      {/* Bottom Action Bar */}
+      <BottomActionBar onStartCamera={handleStartCameraFromBar} />
     </div>
     </WorkflowProvider>
   );
 };
-
-function ActionBarWithExport({ onStartCamera }: { onStartCamera: () => void }) {
-  const { selection } = useWorkflow();
-
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(selection, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workflow-export.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return <BottomActionBar onExport={handleExport} onStartCamera={onStartCamera} />;
-}
 
 export default Index;
