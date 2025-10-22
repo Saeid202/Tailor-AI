@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { GarmentType } from '@/types/garment';
 import { Measurement, MeasurementResult } from '@/types/measurements';
 import { GarmentTabs } from '@/components/layout/GarmentTabs';
@@ -11,12 +10,9 @@ import { MeasurementAnalytics } from '@/components/analytics/MeasurementAnalytic
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { OnlineStore } from '@/components/store/OnlineStore';
 import { Button } from '@/components/ui/button';
-import { Ruler, ArrowRight } from 'lucide-react';
+import { Ruler } from 'lucide-react';
 import { convertMeasurement } from '@/lib/utils/unitConversion';
 import { resetStabilityHistory } from '@/lib/quality/stabilityCheck';
-import { useMeasurements } from '@/hooks/useMeasurements';
-import { useProfile } from '@/hooks/useProfile';
-import { useAuth } from '@/hooks/useAuth';
 import { WorkflowProvider } from '@/contexts/WorkflowContext';
 import { WorkflowNav } from '@/components/workflow/WorkflowNav';
 import { BottomActionBar } from '@/components/workflow/BottomActionBar';
@@ -29,39 +25,89 @@ import { PatternStep } from '@/components/workflow/steps/PatternStep';
 import { VisualStep } from '@/components/workflow/steps/VisualStep';
 import { VirtualFitStep } from '@/components/workflow/steps/VirtualFitStep';
 import { ReviewExportStep } from '@/components/workflow/steps/ReviewExportStep';
+import { useToast } from '@/hooks/use-toast';
 
 type Stage = 'camera' | 'results' | 'history' | 'analytics';
 
+interface Profile {
+  height_cm: number | null;
+  preferred_unit: 'cm' | 'in';
+  onboarding_completed: boolean;
+}
+
+const STORAGE_KEYS = {
+  MEASUREMENTS: 'tailor_measurements',
+  PROFILE: 'tailor_profile',
+};
+
 const Index = () => {
-  const navigate = useNavigate();
+  const { toast } = useToast();
   const [garmentType, setGarmentType] = useState<GarmentType>('shirt');
   const [stage, setStage] = useState<Stage>('camera');
   const [unit, setUnit] = useState<'cm' | 'in'>('cm');
   const [result, setResult] = useState<MeasurementResult | null>(null);
   const [liveMeasurements, setLiveMeasurements] = useState<Measurement[]>([]);
-  const { measurements, loading, saveMeasurement, deleteMeasurement } = useMeasurements();
-  const { profile, updateProfile } = useProfile();
-  const { signOut } = useAuth();
+  const [measurements, setMeasurements] = useState<MeasurementResult[]>([]);
+  const [profile, setProfile] = useState<Profile>({
+    height_cm: null,
+    preferred_unit: 'cm',
+    onboarding_completed: false,
+  });
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Show onboarding for new users
+  // Load data from localStorage on mount
   useEffect(() => {
-    if (profile && !profile.onboarding_completed) {
+    const storedMeasurements = localStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
+    const storedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
+
+    if (storedMeasurements) {
+      try {
+        const parsed = JSON.parse(storedMeasurements);
+        setMeasurements(parsed.map((m: any) => ({
+          ...m,
+          capturedAt: new Date(m.capturedAt),
+        })));
+      } catch (e) {
+        console.error('Failed to load measurements:', e);
+      }
+    }
+
+    if (storedProfile) {
+      try {
+        const parsed = JSON.parse(storedProfile);
+        setProfile(parsed);
+        setUnit(parsed.preferred_unit);
+      } catch (e) {
+        console.error('Failed to load profile:', e);
+      }
+    }
+
+    // Show onboarding for new users
+    if (!storedProfile || !JSON.parse(storedProfile).onboarding_completed) {
       setTimeout(() => setShowOnboarding(true), 500);
     }
-  }, [profile]);
+  }, []);
 
-  const handleOnboardingComplete = async (height: number, preferredUnit: 'cm' | 'in') => {
-    if (height > 0) {
-      await updateProfile({
-        height_cm: height,
-        preferred_unit: preferredUnit,
-        onboarding_completed: true
-      });
-      setUnit(preferredUnit);
-    } else {
-      await updateProfile({ onboarding_completed: true });
-    }
+  // Save measurements to localStorage
+  const saveMeasurementsToStorage = (newMeasurements: MeasurementResult[]) => {
+    localStorage.setItem(STORAGE_KEYS.MEASUREMENTS, JSON.stringify(newMeasurements));
+    setMeasurements(newMeasurements);
+  };
+
+  // Save profile to localStorage
+  const saveProfileToStorage = (newProfile: Profile) => {
+    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(newProfile));
+    setProfile(newProfile);
+  };
+
+  const handleOnboardingComplete = (height: number, preferredUnit: 'cm' | 'in') => {
+    const newProfile = {
+      height_cm: height > 0 ? height : null,
+      preferred_unit: preferredUnit,
+      onboarding_completed: true,
+    };
+    saveProfileToStorage(newProfile);
+    setUnit(preferredUnit);
     setShowOnboarding(false);
   };
 
@@ -107,9 +153,14 @@ const Index = () => {
     resetStabilityHistory();
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (result) {
-      await saveMeasurement(result);
+      const newMeasurements = [result, ...measurements];
+      saveMeasurementsToStorage(newMeasurements);
+      toast({
+        title: 'Measurement saved',
+        description: 'Your measurements have been saved successfully.',
+      });
     }
   };
 
@@ -127,8 +178,15 @@ const Index = () => {
     setResult(null);
   };
 
-  const handleSignOut = async () => {
-    await signOut();
+  const handleDeleteMeasurement = (capturedAt: Date) => {
+    const newMeasurements = measurements.filter(
+      m => m.capturedAt.getTime() !== capturedAt.getTime()
+    );
+    saveMeasurementsToStorage(newMeasurements);
+    toast({
+      title: 'Measurement deleted',
+      description: 'The measurement has been removed.',
+    });
   };
 
   const handleViewAnalytics = () => {
@@ -142,8 +200,6 @@ const Index = () => {
   };
 
   function WorkflowContent({ garmentType, onGarmentChange }: { garmentType: GarmentType; onGarmentChange: (g: GarmentType) => void }) {
-    // use inside component to access workflow state
-    // note: this component must be used under WorkflowProvider
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { step } = useWorkflow();
     switch (step) {
@@ -168,17 +224,15 @@ const Index = () => {
 
   function CameraSection({ garmentType }: { garmentType: GarmentType }) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { step, update, next } = useWorkflow();
+    const { step, update, next } = useWorkflow();
     if (step !== Step.MEASURE) return null;
 
     const onCaptureProxy = (ms: Measurement[], image: string) => {
-      // Map array to key-value for validation
       const obj: Record<string, number> = {};
       ms.forEach((m) => {
         obj[m.label] = m.value;
       });
       update({ measurements: obj });
-      // auto-advance to Fabric step
       setTimeout(() => next(), 0);
       handleCapture(ms, image);
     };
@@ -210,7 +264,7 @@ const Index = () => {
         onBackToCamera={handleBackToCamera}
         onViewHistory={handleViewHistory}
         onViewAnalytics={handleViewAnalytics}
-        onSignOut={handleSignOut}
+        onSignOut={() => {}} // No-op since no auth
         hasMeasurements={measurements.length > 0}
       />
 
@@ -415,51 +469,43 @@ const Index = () => {
               <HistoryView
                 measurements={measurements}
                 onView={handleViewMeasurement}
-                onDelete={deleteMeasurement}
-                loading={loading}
+                onDelete={handleDeleteMeasurement}
+                loading={false}
               />
             </div>
           </div>
         ) : stage === 'analytics' ? (
           <div className="w-full h-full overflow-auto bg-gradient-to-br from-background via-muted/5 to-muted/10 p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
-              <div>
-                <h2 className="text-3xl font-bold">Measurement Analytics</h2>
-                <p className="text-muted-foreground mt-1">
-                  Track your measurement history and trends
-                </p>
-              </div>
-              <MeasurementAnalytics measurements={measurements} />
+            <div className="max-w-7xl mx-auto">
+              <MeasurementAnalytics
+                measurements={measurements}
+              />
             </div>
           </div>
         ) : null}
       </main>
-      {/* Bottom action bar with export stub */}
+
+      {/* Workflow Bottom bar */}
       <ActionBarWithExport onStartCamera={handleStartCameraFromBar} />
     </div>
     </WorkflowProvider>
   );
 };
 
-export default Index;
-
 function ActionBarWithExport({ onStartCamera }: { onStartCamera: () => void }) {
-  // bridge inside provider to access workflow selection and implement an export stub
   const { selection } = useWorkflow();
+
   const handleExport = () => {
-    const payload = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      selection,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(selection, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    a.download = `tailor-cnc-export-${ts}.json`;
+    a.download = 'workflow-export.json';
     a.click();
     URL.revokeObjectURL(url);
   };
-  return <BottomActionBar onStartCamera={onStartCamera} onExport={handleExport} />;
+
+  return <BottomActionBar onExport={handleExport} onStartCamera={onStartCamera} />;
 }
+
+export default Index;
