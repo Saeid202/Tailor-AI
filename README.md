@@ -1,20 +1,63 @@
 # Tailor AI - Advanced 3D Body Scanning System
 
-## Overview
-Enterprise-grade AI-powered body scanning system with 98%+ measurement accuracy for precision clothing manufacturing.
+<div align="center">
 
-## 👨‍💻 AI Lead Engineer
-
-**Alireza Saeedi**
-
-### 📬 Contact Information
-
-[![Email](https://img.shields.io/badge/Email-alirezasaeediofficial%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:alirezasaeediofficial@gmail.com)
-[![Telegram](https://img.shields.io/badge/Telegram-@AR__Saeedi-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/AR_Saeedi)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-+98%209910615570-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/0989910615570)
-[![Phone](https://img.shields.io/badge/Phone-098--9910615570-blue?style=for-the-badge&logo=phone&logoColor=white)](tel:+989910615570)
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&duration=2800&pause=2000&color=00D9FF&center=true&vCenter=true&width=940&lines=Built+%26+Engineered+by+ALIREZA+SAEEDI" alt="Developer" />
 
 ---
+
+## 👨‍💻 **AI LEAD ENGINEER**
+
+# 🌟 **ALIREZA SAEEDI** 🌟
+
+<img src="https://img.shields.io/badge/AI%20%26%20Computer%20Vision-Expert-00D9FF?style=for-the-badge&labelColor=000000&logo=python&logoColor=white" alt="AI Expert" />
+<img src="https://img.shields.io/badge/3D%20Reconstruction-Specialist-00D9FF?style=for-the-badge&labelColor=000000&logo=threedotjs&logoColor=white" alt="3D Specialist" />
+<img src="https://img.shields.io/badge/Deep%20Learning-Advanced-00D9FF?style=for-the-badge&labelColor=000000&logo=pytorch&logoColor=white" alt="Deep Learning" />
+
+### 🚀 Architect of Enterprise AI Body Scanning Solutions
+
+[![GitHub](https://img.shields.io/badge/GitHub-Saeid202-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saeid202)
+[![Profile Views](https://komarev.com/ghpvc/?username=Saeid202&label=Profile%20Views&color=00D9FF&style=for-the-badge)](https://github.com/Saeid202)
+
+---
+
+### 📬 **CONNECT WITH ME**
+
+<table>
+  <tr>
+    <td align="center" width="200">
+      <a href="mailto:alirezasaeediofficial@gmail.com">
+        <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/><br/>
+        <sub><b>alirezasaeediofficial@gmail.com</b></sub>
+      </a>
+    </td>
+    <td align="center" width="200">
+      <a href="https://t.me/AR_Saeedi">
+        <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/><br/>
+        <sub><b>@AR_Saeedi</b></sub>
+      </a>
+    </td>
+    <td align="center" width="200">
+      <a href="https://wa.me/0989910615570">
+        <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp"/><br/>
+        <sub><b>+98 991 061 5570</b></sub>
+      </a>
+    </td>
+    <td align="center" width="200">
+      <a href="tel:+989910615570">
+        <img src="https://img.shields.io/badge/Phone-0078D4?style=for-the-badge&logo=microsoft-teams&logoColor=white" alt="Phone"/><br/>
+        <sub><b>098-9910615570</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
+
+</div>
+
+## Overview
+Enterprise-grade AI-powered body scanning system with 98%+ measurement accuracy for precision clothing manufacturing.
 
 ## Features
 - **AI-Guided Camera Positioning**: Real-time feedback for optimal front, side, and back captures
