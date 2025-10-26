@@ -23,34 +23,20 @@
 
 ### 📬 **CONNECT WITH ME**
 
-<table>
-  <tr>
-    <td align="center" width="200">
-      <a href="mailto:alirezasaeediofficial@gmail.com">
-        <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/><br/>
-        <sub><b>alirezasaeediofficial@gmail.com</b></sub>
-      </a>
-    </td>
-    <td align="center" width="200">
-      <a href="https://t.me/AR_Saeedi">
-        <img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/><br/>
-        <sub><b>@AR_Saeedi</b></sub>
-      </a>
-    </td>
-    <td align="center" width="200">
-      <a href="https://wa.me/0989910615570">
-        <img src="https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp"/><br/>
-        <sub><b>+98 991 061 5570</b></sub>
-      </a>
-    </td>
-    <td align="center" width="200">
-      <a href="tel:+989910615570">
-        <img src="https://img.shields.io/badge/Phone-0078D4?style=for-the-badge&logo=microsoft-teams&logoColor=white" alt="Phone"/><br/>
-        <sub><b>098-9910615570</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="mailto:alirezasaeediofficial@gmail.com">
+    <img src="https://img.shields.io/badge/EMAIL-alirezasaeediofficial@gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/>
+  </a>
+  <a href="https://t.me/AR_Saeedi">
+    <img src="https://img.shields.io/badge/TELEGRAM-@AR__Saeedi-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"/>
+  </a>
+  <a href="https://wa.me/0989910615570">
+    <img src="https://img.shields.io/badge/WHATSAPP-+98%20991%20061%205570-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp"/>
+  </a>
+  <a href="tel:+989910615570">
+    <img src="https://img.shields.io/badge/PHONE-098--9910615570-0078D4?style=for-the-badge&logo=phone&logoColor=white" alt="Phone"/>
+  </a>
+</p>
 
 ---
 
