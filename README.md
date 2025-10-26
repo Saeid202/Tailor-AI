@@ -2,22 +2,16 @@
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&duration=2800&pause=2000&color=00D9FF&center=true&vCenter=true&width=940&lines=Built+%26+Engineered+by+ALIREZA+SAEEDI" alt="Developer" />
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=32&duration=2800&pause=2000&color=00D9FF&center=true&vCenter=true&width=940&lines=Ai+lead+engineer+:+AlirezA+Saeedi" alt="Developer" />
 
 ---
 
-## 👨‍💻 **AI LEAD ENGINEER**
-
 # 🌟 **ALIREZA SAEEDI** 🌟
+## 👨‍💻 **AI LEAD ENGINEER**
 
 <img src="https://img.shields.io/badge/AI%20%26%20Computer%20Vision-Expert-00D9FF?style=for-the-badge&labelColor=000000&logo=python&logoColor=white" alt="AI Expert" />
 <img src="https://img.shields.io/badge/3D%20Reconstruction-Specialist-00D9FF?style=for-the-badge&labelColor=000000&logo=threedotjs&logoColor=white" alt="3D Specialist" />
 <img src="https://img.shields.io/badge/Deep%20Learning-Advanced-00D9FF?style=for-the-badge&labelColor=000000&logo=pytorch&logoColor=white" alt="Deep Learning" />
-
-### 🚀 Architect of Enterprise AI Body Scanning Solutions
-
-[![GitHub](https://img.shields.io/badge/GitHub-Saeid202-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Saeid202)
-[![Profile Views](https://komarev.com/ghpvc/?username=Saeid202&label=Profile%20Views&color=00D9FF&style=for-the-badge)](https://github.com/Saeid202)
 
 ---
 
