@@ -28,9 +28,7 @@
   <a href="https://wa.me/0989910615570">
     <img src="https://img.shields.io/badge/WHATSAPP-+98%20991%20061%205570-25D366?style=for-the-badge&logo=whatsapp&logoColor=white" alt="WhatsApp"/>
   </a>
-  <a href="tel:+989910615570">
-    <img src="https://img.shields.io/badge/PHONE-098--9910615570-0078D4?style=for-the-badge&logo=phone&logoColor=white" alt="Phone"/>
-  </a>
+  <img src="https://img.shields.io/badge/PHONE-098--9910615570-0078D4?style=for-the-badge&logo=phone&logoColor=white" alt="Phone"/>
 </p>
 
 ---
