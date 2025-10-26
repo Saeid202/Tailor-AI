@@ -31,7 +31,7 @@ class CameraCalibrator:
         self.camera_matrix: Optional[np.ndarray] = None
         self.dist_coeffs: Optional[np.ndarray] = None
         self.rvecs: Optional[List[np.ndarray]] = None
-        self.tvecs: Optional[List[np.ndarray] = None
+        self.tvecs: Optional[List[np.ndarray]] = None
         self.calibration_error: float = 0.0
         
         # Object points (3D points in real world space)

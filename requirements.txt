@@ -1,3 +1,6 @@
+# Python 3.8 - 3.11 Required (3.10 or 3.11 recommended)
+# MediaPipe and some ML libraries don't support Python 3.12+ yet
+
 # Core Computer Vision & Deep Learning
 opencv-python==4.8.1.78
 opencv-contrib-python==4.8.1.78
