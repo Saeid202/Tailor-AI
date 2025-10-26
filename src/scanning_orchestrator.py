@@ -177,7 +177,7 @@ class ScanningOrchestrator:
         
         if landmarks is None:
             # No person detected
-            self._draw_instruction(display_frame, "⚠️ No person detected. Please step into view.", (0, 0, 255))
+            self._draw_instruction(display_frame, "[WARN] No person detected. Please step into view.", (0, 0, 255))
             self.stable_frames_count = 0
             return display_frame
         

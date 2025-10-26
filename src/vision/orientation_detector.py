@@ -255,28 +255,28 @@ class OrientationDetector:
             Guidance message
         """
         if confidence < self.confidence_threshold:
-            return "⚠️ Please stand still and ensure full body is visible"
+            return "[WARN] Please stand still and ensure full body is visible"
         
         if current_orientation == target_orientation:
-            return f"✓ Perfect! {target_orientation.value.replace('_', ' ').title()} position detected"
+            return f"[OK] Perfect! {target_orientation.value.replace('_', ' ').title()} position detected"
         
         # Provide guidance to reach target
         guidance = {
-            (Orientation.FRONT, Orientation.LEFT_SIDE): "➡️ Please rotate 90° to your left",
-            (Orientation.FRONT, Orientation.RIGHT_SIDE): "⬅️ Please rotate 90° to your right",
-            (Orientation.FRONT, Orientation.BACK): "🔄 Please turn around 180°",
+            (Orientation.FRONT, Orientation.LEFT_SIDE): "[>>] Please rotate 90 degrees to your left",
+            (Orientation.FRONT, Orientation.RIGHT_SIDE): "[<<] Please rotate 90 degrees to your right",
+            (Orientation.FRONT, Orientation.BACK): "[TURN] Please turn around 180 degrees",
             
-            (Orientation.LEFT_SIDE, Orientation.FRONT): "⬅️ Please rotate 90° to your right",
-            (Orientation.LEFT_SIDE, Orientation.RIGHT_SIDE): "🔄 Please turn around 180°",
-            (Orientation.LEFT_SIDE, Orientation.BACK): "➡️ Please rotate 90° to your left",
+            (Orientation.LEFT_SIDE, Orientation.FRONT): "[<<] Please rotate 90 degrees to your right",
+            (Orientation.LEFT_SIDE, Orientation.RIGHT_SIDE): "[TURN] Please turn around 180 degrees",
+            (Orientation.LEFT_SIDE, Orientation.BACK): "[>>] Please rotate 90 degrees to your left",
             
-            (Orientation.RIGHT_SIDE, Orientation.FRONT): "➡️ Please rotate 90° to your left",
-            (Orientation.RIGHT_SIDE, Orientation.LEFT_SIDE): "🔄 Please turn around 180°",
-            (Orientation.RIGHT_SIDE, Orientation.BACK): "⬅️ Please rotate 90° to your right",
+            (Orientation.RIGHT_SIDE, Orientation.FRONT): "[>>] Please rotate 90 degrees to your left",
+            (Orientation.RIGHT_SIDE, Orientation.LEFT_SIDE): "[TURN] Please turn around 180 degrees",
+            (Orientation.RIGHT_SIDE, Orientation.BACK): "[<<] Please rotate 90 degrees to your right",
             
-            (Orientation.BACK, Orientation.FRONT): "🔄 Please turn around 180°",
-            (Orientation.BACK, Orientation.LEFT_SIDE): "⬅️ Please rotate 90° to your right",
-            (Orientation.BACK, Orientation.RIGHT_SIDE): "➡️ Please rotate 90° to your left",
+            (Orientation.BACK, Orientation.FRONT): "[TURN] Please turn around 180 degrees",
+            (Orientation.BACK, Orientation.LEFT_SIDE): "[<<] Please rotate 90 degrees to your right",
+            (Orientation.BACK, Orientation.RIGHT_SIDE): "[>>] Please rotate 90 degrees to your left",
         }
         
         key = (current_orientation, target_orientation)
@@ -307,10 +307,10 @@ class OrientationDetector:
         # Color based on match
         if target_orientation and orientation == target_orientation:
             color = (0, 255, 0)  # Green
-            status = "✓ CORRECT"
+            status = "[OK] CORRECT"
         elif target_orientation:
             color = (0, 165, 255)  # Orange
-            status = "⟳ ADJUST"
+            status = "[>>] ADJUST"
         else:
             color = (255, 255, 255)  # White
             status = ""

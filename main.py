@@ -17,21 +17,21 @@ from src.utils.config_loader import get_config
 def print_banner():
     """Print application banner"""
     banner = """
-    ╔═══════════════════════════════════════════════════════════════╗
-    ║                                                               ║
-    ║                       TAILOR AI                               ║
-    ║                                                               ║
-    ║          Advanced 3D Body Scanning System                     ║
-    ║          98%+ Measurement Accuracy for CNC Manufacturing      ║
-    ║                                                               ║
-    ╚═══════════════════════════════════════════════════════════════╝
+    ================================================================
+    
+                           TAILOR AI                               
+    
+              Advanced 3D Body Scanning System                     
+          98%+ Measurement Accuracy for CNC Manufacturing      
+    
+    ================================================================
     
     Features:
-    ✓ AI-Guided Multi-View Capture (Front, Side, Back)
-    ✓ Real-time Pose Detection & Orientation Guidance
-    ✓ Advanced 3D Reconstruction (SMPL-X + Neural Depth)
-    ✓ High-Precision Body Measurements
-    ✓ CNC-Ready 3D Models (OBJ, PLY, STL)
+    [OK] AI-Guided Multi-View Capture (Front, Side, Back)
+    [OK] Real-time Pose Detection & Orientation Guidance
+    [OK] Advanced 3D Reconstruction (SMPL-X + Neural Depth)
+    [OK] High-Precision Body Measurements
+    [OK] CNC-Ready 3D Models (OBJ, PLY, STL)
     
     """
     print(banner)
@@ -48,7 +48,7 @@ def progress_callback(progress: float, state: str):
     # Simple progress indicator
     bar_length = 50
     filled = int(bar_length * progress / 100)
-    bar = '█' * filled + '░' * (bar_length - filled)
+    bar = '=' * filled + '-' * (bar_length - filled)
     print(f'\r[{bar}] {progress:.1f}% - {state}', end='', flush=True)
 
 
@@ -131,7 +131,7 @@ def main():
             calibration_file = Path("config/camera_calibration.pkl")
             calibrator.save_calibration(calibration_file)
             logger.info(f"Calibration saved to {calibration_file}")
-            print("\n✓ Camera calibration successful!")
+            print("\n[SUCCESS] Camera calibration successful!")
         else:
             logger.error("Camera calibration failed")
             return 1
