@@ -1,0 +1,148 @@
+# Tailor AI Configuration
+
+# Camera Settings
+camera:
+  device_id: 0
+  resolution:
+    width: 1920
+    height: 1080
+  fps: 30
+  autofocus: true
+  
+# Capture Settings
+capture:
+  orientations:
+    - front
+    - left_side
+    - right_side
+    - back
+  images_per_orientation: 3
+  distance_from_camera_cm: 200  # Recommended distance
+  
+# AI Model Settings
+models:
+  pose_detection:
+    type: "mediapipe"  # mediapipe or openpose
+    min_detection_confidence: 0.7
+    min_tracking_confidence: 0.7
+    model_complexity: 2  # 0, 1, or 2 (higher = more accurate)
+    
+  body_segmentation:
+    type: "detectron2"
+    model: "COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml"
+    confidence_threshold: 0.8
+    
+  depth_estimation:
+    type: "midas"  # midas or dpt
+    model: "DPT_Large"  # DPT_Large, DPT_Hybrid, MiDaS_small
+    
+  smplx:
+    model_path: "models/smplx"
+    gender: "neutral"  # male, female, neutral
+    num_betas: 10
+    num_expression_coeffs: 10
+    
+# 3D Reconstruction Settings
+reconstruction:
+  method: "smplx_fitting"  # smplx_fitting or neural_reconstruction
+  voxel_size: 0.005  # meters
+  depth_scale: 1000.0
+  depth_trunc: 3.0
+  
+# Measurement Settings
+measurements:
+  unit: "cm"  # cm or inch
+  precision: 0.1  # decimal places
+  required_accuracy: 98.0  # percentage
+  
+  # Body measurements to extract
+  dimensions:
+    upper_body:
+      - shoulder_width
+      - shoulder_to_shoulder_back
+      - chest_circumference
+      - bust_circumference
+      - under_bust
+      - waist_circumference
+      - upper_waist
+      - neck_circumference
+      - neck_to_waist_front
+      - neck_to_waist_back
+      - shoulder_slope
+      - armhole_depth
+      - across_back
+      - across_front
+      
+    arms:
+      - sleeve_length
+      - arm_length
+      - upper_arm_circumference
+      - elbow_circumference
+      - wrist_circumference
+      - shoulder_to_elbow
+      - elbow_to_wrist
+      
+    lower_body:
+      - hip_circumference
+      - high_hip
+      - thigh_circumference
+      - knee_circumference
+      - calf_circumference
+      - ankle_circumference
+      - waist_to_hip
+      - inseam
+      - outseam
+      
+    heights:
+      - total_height
+      - cervical_height
+      - shoulder_height
+      - bust_height
+      - waist_height
+      - hip_height
+      - crotch_height
+      
+# Orientation Detection
+orientation_detection:
+  use_pose_landmarks: true
+  use_face_detection: true
+  confidence_threshold: 0.85
+  
+  # Angle thresholds for orientation classification
+  front_angle_range: [-30, 30]    # degrees
+  side_angle_range: [60, 120]     # degrees  
+  back_angle_range: [150, 210]    # degrees
+  
+# Quality Control
+quality_control:
+  min_body_coverage: 0.85  # 85% of body must be visible
+  blur_threshold: 100  # Laplacian variance threshold
+  lighting_check: true
+  pose_stability_frames: 5  # frames to confirm stable pose
+  
+# Export Settings
+export:
+  formats:
+    - obj
+    - ply
+    - stl
+  texture: true
+  include_measurements: true
+  
+# UI Settings
+ui:
+  show_preview: true
+  show_landmarks: true
+  show_skeleton: true
+  feedback_voice: false
+  language: "en"
+  
+# Advanced Settings
+advanced:
+  gpu_acceleration: true
+  multiprocessing: true
+  num_workers: 4
+  cache_models: true
+  debug_mode: false
+  save_intermediate_results: true
+
