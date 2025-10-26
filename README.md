@@ -7,11 +7,12 @@
 ---
 
 # 🌟 **ALIREZA SAEEDI** 🌟
-## 👨‍💻 **AI LEAD ENGINEER**
 
 <img src="https://img.shields.io/badge/AI%20%26%20Computer%20Vision-Expert-00D9FF?style=for-the-badge&labelColor=000000&logo=python&logoColor=white" alt="AI Expert" />
 <img src="https://img.shields.io/badge/3D%20Reconstruction-Specialist-00D9FF?style=for-the-badge&labelColor=000000&logo=threedotjs&logoColor=white" alt="3D Specialist" />
 <img src="https://img.shields.io/badge/Deep%20Learning-Advanced-00D9FF?style=for-the-badge&labelColor=000000&logo=pytorch&logoColor=white" alt="Deep Learning" />
+
+[![GitHub](https://img.shields.io/badge/GitHub-ar--saeedi-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ar-saeedi)
 
 ---
 
