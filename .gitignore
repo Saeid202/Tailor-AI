@@ -58,3 +58,4 @@ config/camera_calibration.pkl
 
 
 node_modules/
+.env
