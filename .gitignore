@@ -55,3 +55,6 @@ Thumbs.db
 
 # Configuration (keep template, ignore custom)
 config/camera_calibration.pkl
+
+
+node_modules/
