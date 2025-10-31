@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ProductDetailModal } from '@/components/store/ProductDetailModal';
+import { PersonalTailorButton } from '@/components/store/PersonalTailorButton';
+import { CustomOrderModal } from '@/components/store/CustomOrderModal';
 import { useCart } from '@/contexts/CartContext';
 import { 
   Search, 
@@ -28,6 +30,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Product, StoreFilters } from '@/types/store';
+import type { BodyMeasurements } from '@/types/profile';
 
 interface OnlineStoreProps {
   className?: string;
@@ -48,9 +51,19 @@ export function OnlineStore({ className }: OnlineStoreProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [customOrderProduct, setCustomOrderProduct] = useState<Product | null>(null);
+  const [customOrderMeasurements, setCustomOrderMeasurements] = useState<BodyMeasurements | null>(null);
+  const [isCustomOrderModalOpen, setIsCustomOrderModalOpen] = useState(false);
 
   // Use cart context
   const { cart, wishlist, addToCart, removeFromCart, toggleWishlist, cartTotal, cartItemCount } = useCart();
+
+  // Handle custom order start
+  const handleCustomOrderStart = (product: Product, measurements: BodyMeasurements) => {
+    setCustomOrderProduct(product);
+    setCustomOrderMeasurements(measurements);
+    setIsCustomOrderModalOpen(true);
+  };
 
   // Sample product data
   const products: Product[] = [
@@ -444,6 +457,7 @@ export function OnlineStore({ className }: OnlineStoreProps) {
                     setSelectedProduct(product);
                     setIsProductModalOpen(true);
                   }}
+                  onCustomOrderStart={handleCustomOrderStart}
                   isInWishlist={wishlist.includes(product.id)}
                 />
               ))}
@@ -467,6 +481,20 @@ export function OnlineStore({ className }: OnlineStoreProps) {
           setSelectedProduct(null);
         }}
       />
+
+      {/* Custom Order Modal */}
+      {customOrderProduct && customOrderMeasurements && (
+        <CustomOrderModal
+          isOpen={isCustomOrderModalOpen}
+          onClose={() => {
+            setIsCustomOrderModalOpen(false);
+            setCustomOrderProduct(null);
+            setCustomOrderMeasurements(null);
+          }}
+          product={customOrderProduct}
+          measurements={customOrderMeasurements}
+        />
+      )}
     </section>
   );
 }
@@ -476,10 +504,11 @@ interface ProductCardProps {
   onAddToCart: (product: Product, size?: string, color?: any) => void;
   onToggleWishlist: (productId: string) => void;
   onViewDetails: (product: Product) => void;
+  onCustomOrderStart: (product: Product, measurements: BodyMeasurements) => void;
   isInWishlist: boolean;
 }
 
-function ProductCard({ product, onAddToCart, onToggleWishlist, onViewDetails, isInWishlist }: ProductCardProps) {
+function ProductCard({ product, onAddToCart, onToggleWishlist, onViewDetails, onCustomOrderStart, isInWishlist }: ProductCardProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<any>(null);
 
@@ -579,20 +608,31 @@ function ProductCard({ product, onAddToCart, onToggleWishlist, onViewDetails, is
       </CardContent>
 
       <CardFooter className="p-4 pt-0">
-        <div className="flex gap-2 w-full">
-          <Button variant="outline" onClick={() => onViewDetails(product)} size="sm" className="flex-1">
-            <Eye className="w-4 h-4 mr-1" />
-            View
-          </Button>
-          <Button 
-            onClick={handleAddToCart}
-            disabled={product.sizes.length > 0 && !selectedSize && product.category !== 'pattern'}
-            size="sm"
-            className="flex-1"
-          >
-            <ShoppingCart className="w-4 h-4 mr-1" />
-            {product.category === 'pattern' ? 'Download' : 'Add'}
-          </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-2 w-full">
+            <Button variant="outline" onClick={() => onViewDetails(product)} size="sm" className="flex-1">
+              <Eye className="w-4 h-4 mr-1" />
+              View
+            </Button>
+            <Button 
+              onClick={handleAddToCart}
+              disabled={product.sizes.length > 0 && !selectedSize && product.category !== 'pattern'}
+              size="sm"
+              className="flex-1"
+            >
+              <ShoppingCart className="w-4 h-4 mr-1" />
+              {product.category === 'pattern' ? 'Download' : 'Add'}
+            </Button>
+          </div>
+          {product.category !== 'pattern' && (
+            <PersonalTailorButton
+              product={product}
+              onCustomOrderStart={onCustomOrderStart}
+              size="sm"
+              variant="outline"
+              className="w-full border-primary/20 hover:bg-primary/10 hover:text-primary"
+            />
+          )}
         </div>
       </CardFooter>
     </Card>

@@ -1,144 +1,109 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { z } from 'zod';
-import { Ruler } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmailVerification } from '@/components/auth/EmailVerification';
+import { SignInForm } from '@/components/auth/SignInForm';
+import { RegistrationForm } from '@/components/auth/RegistrationForm';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
-const authSchema = z.object({
-  email: z.string().trim().email({ message: 'Invalid email address' }).max(255),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }).max(100),
-});
+type AuthStep = 'verification' | 'signin' | 'registration';
 
-export default function Auth() {
-  const [isSignUp, setIsSignUp] = useState(false);
+const Auth = () => {
+  const [step, setStep] = useState<AuthStep>('verification');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  const [loading, setLoading] = useState(false);
-  const { signUp, signIn, user } = useAuth();
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/app');
-    }
-  }, [user, navigate]);
-
-  const validateForm = () => {
-    try {
-      authSchema.parse({ email, password });
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: { email?: string; password?: string } = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as 'email' | 'password'] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/app');
+      } else {
+        setLoading(false);
       }
-      return false;
-    }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/app');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  const handleEmailVerified = async (verifiedEmail: string, userExists: boolean) => {
+    setEmail(verifiedEmail);
+    setIsExistingUser(userExists);
+    
+    // Existing user → Password screen
+    // New user → Registration form
+    setStep(userExists ? 'signin' : 'registration');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setLoading(true);
-    
-    if (isSignUp) {
-      const { error } = await signUp(email, password);
-      if (!error) {
-        setIsSignUp(false);
-        setPassword('');
-      }
-    } else {
-      await signIn(email, password);
-    }
-    
-    setLoading(false);
+  const handleSignInSuccess = () => {
+    navigate('/app');
   };
+
+  const handleRegistrationComplete = () => {
+    navigate('/app');
+  };
+
+  const handleChangeEmail = () => {
+    setStep('verification');
+    setEmail('');
+  };
+
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Ruler className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
-          </CardTitle>
-          <CardDescription>
-            {isSignUp
-              ? 'Sign up to start measuring with Tailor AI'
-              : 'Sign in to access your measurements'}
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className={errors.email ? 'border-destructive' : ''}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className={errors.password ? 'border-destructive' : ''}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Sign In'}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setErrors({});
-              }}
-              disabled={loading}
-            >
-              {isSignUp
-                ? 'Already have an account? Sign in'
-                : "Don't have an account? Sign up"}
-            </Button>
-          </CardFooter>
-        </form>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardContent className="pt-6">
+          {step === 'verification' && (
+            <EmailVerification onVerified={handleEmailVerified} />
+          )}
+
+          {step === 'signin' && (
+            <SignInForm
+              email={email}
+              onSuccess={handleSignInSuccess}
+              onChangeEmail={handleChangeEmail}
+            />
+          )}
+
+          {step === 'registration' && (
+            <RegistrationForm
+              email={email}
+              onComplete={handleRegistrationComplete}
+            />
+          )}
+        </CardContent>
       </Card>
+
+      {/* Background decoration */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
     </div>
   );
-}
+};
+
+export default Auth;

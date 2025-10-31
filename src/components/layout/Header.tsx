@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Ruler, Menu, ArrowRight, Phone, Mail, MapPin, Sparkles, Zap, Camera, BarChart3, User, LogOut } from 'lucide-react';
+import { Ruler, Menu, ArrowRight, Phone, Mail, MapPin, Sparkles, Zap, Camera, BarChart3, User, LogOut, ShoppingCart, Package, Settings, Heart, X, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/contexts/CartContext';
 
 interface HeaderProps {
   variant?: 'landing' | 'app';
@@ -17,9 +19,19 @@ interface HeaderProps {
 export function Header({ variant = 'landing', className }: HeaderProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { cart, cartItemCount, cartTotal, removeFromCart, updateCartItem } = useCart();
 
-  const getUserInitials = (email: string) => {
+  const getUserInitials = (email: string, fullName?: string) => {
+    if (fullName) {
+      const parts = fullName.split(' ');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return fullName.charAt(0).toUpperCase();
+    }
     return email.charAt(0).toUpperCase();
   };
 
@@ -148,42 +160,114 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
     </NavigationMenu>
   );
 
+  const CartButton = () => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative"
+      onClick={() => setIsCartOpen(true)}
+    >
+      <ShoppingCart className="h-5 w-5" />
+      {cartItemCount > 0 && (
+        <Badge 
+          variant="destructive" 
+          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+        >
+          {cartItemCount}
+        </Badge>
+      )}
+    </Button>
+  );
+
   const AuthActions = () => {
     if (user) {
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
-                <AvatarFallback>{getUserInitials(user.email || '')}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || 'User'}</p>
-                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate('/app')}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Dashboard</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <CartButton />
+          <DropdownMenu open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="relative h-10 w-10 rounded-full"
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={undefined} alt={user.email} />
+                  <AvatarFallback>{getUserInitials(user.email || '', user.fullName)}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              className="w-56 z-50" 
+              align="end" 
+              onCloseAutoFocus={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user.fullName || 'User'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onSelect={() => {
+                  navigate('/app');
+                }}
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onSelect={() => {
+                  navigate('/profile');
+                }}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Profile & Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onSelect={() => {
+                  navigate('/profile?tab=address');
+                }}
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                <span>Shipping Address</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onSelect={() => {
+                  navigate('/profile?tab=orders');
+                }}
+              >
+                <Package className="mr-2 h-4 w-4" />
+                <span>My Orders</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onSelect={() => {
+                  setIsCartOpen(true);
+                }}
+              >
+                <ShoppingCart className="mr-2 h-4 w-4" />
+                <span>Shopping Cart ({cartItemCount})</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onSelect={() => {
+                  signOut();
+                  navigate('/');
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     }
 
     return (
-      <>
+      <div className="flex items-center gap-2">
+        <CartButton />
         <Button
           variant="ghost"
           onClick={() => navigate('/auth')}
@@ -199,7 +283,7 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
           <span className="sm:hidden">Start</span>
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-      </>
+      </div>
     );
   };
 
@@ -219,21 +303,55 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
             <div className="space-y-3 border-b pb-4">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
-                  <AvatarFallback>{getUserInitials(user.email || '')}</AvatarFallback>
+                  <AvatarImage src={undefined} alt={user.email} />
+                  <AvatarFallback>{getUserInitials(user.email || '', user.fullName)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{user.user_metadata?.full_name || 'User'}</p>
+                  <p className="text-sm font-medium">{user.fullName || 'User'}</p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  className="justify-start" 
+                  onClick={() => { navigate('/app'); setIsOpen(false); }}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="justify-start relative" 
+                  onClick={() => { setIsOpen(false); setIsCartOpen(true); }}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Cart
+                  {cartItemCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                    >
+                      {cartItemCount}
+                    </Badge>
+                  )}
+                </Button>
               </div>
               <Button 
                 variant="outline" 
                 className="w-full justify-start" 
-                onClick={() => { navigate('/app'); setIsOpen(false); }}
+                onClick={() => { navigate('/profile'); setIsOpen(false); }}
               >
-                <User className="w-4 h-4 mr-2" />
-                Dashboard
+                <Settings className="w-4 h-4 mr-2" />
+                Profile & Settings
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => { navigate('/profile?tab=address'); setIsOpen(false); }}
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                Shipping Address
               </Button>
             </div>
           )}
@@ -258,6 +376,27 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
               </div>
             ))}
           </nav>
+          
+          {!user && (
+            <div className="border-b pb-4">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start relative" 
+                onClick={() => { setIsOpen(false); setIsCartOpen(true); }}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Shopping Cart
+                {cartItemCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                  >
+                    {cartItemCount}
+                  </Badge>
+                )}
+              </Button>
+            </div>
+          )}
           
           {user ? (
             <div className="pt-6 border-t space-y-3">
@@ -292,23 +431,127 @@ export function Header({ variant = 'landing', className }: HeaderProps) {
     </Sheet>
   );
 
+  const CartDrawer = () => (
+    <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+      <SheetContent className="w-full sm:max-w-lg">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Shopping Cart ({cartItemCount})
+          </SheetTitle>
+        </SheetHeader>
+        
+        <div className="flex flex-col h-full pt-6">
+          {cart.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+              <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Add items to your cart to get started
+              </p>
+              <Button onClick={() => { setIsCartOpen(false); navigate('/app'); }}>
+                Browse Products
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                {cart.map((item, index) => (
+                  <div key={index} className="flex gap-4 p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium mb-1">Product Item</h4>
+                      {item.selectedSize && (
+                        <p className="text-sm text-muted-foreground">Size: {item.selectedSize}</p>
+                      )}
+                      {item.selectedColor && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm text-muted-foreground">Color:</span>
+                          <div
+                            className="w-4 h-4 rounded-full border"
+                            style={{ backgroundColor: item.selectedColor.hex }}
+                          />
+                          <span className="text-sm">{item.selectedColor.name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-3">
+                        <div className="flex items-center border rounded-md">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateCartItem(index, { quantity: Math.max(1, item.quantity - 1) })}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="px-3 text-sm font-medium">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateCartItem(index, { quantity: item.quantity + 1 })}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="font-semibold">${(item.totalPrice * item.quantity).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeFromCart(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4 space-y-4">
+                <div className="flex justify-between items-center text-lg font-semibold">
+                  <span>Total:</span>
+                  <span>${cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="space-y-2">
+                  <Button className="w-full" size="lg">
+                    Proceed to Checkout
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => setIsCartOpen(false)}
+                  >
+                    Continue Shopping
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+
   return (
-    <header className={cn(
-      "sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
-      "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:via-transparent before:to-primary/5 before:opacity-50",
-      className
-    )}>
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <Brand />
-          <DesktopNavigation />
-          <div className="flex items-center gap-3">
-            <AuthActions />
-            <MobileNavigation />
+    <>
+      <header className={cn(
+        "sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
+        "before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/5 before:via-transparent before:to-primary/5 before:opacity-50 before:pointer-events-none",
+        className
+      )}>
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            <Brand />
+            <DesktopNavigation />
+            <div className="flex items-center gap-3">
+              <AuthActions />
+              <MobileNavigation />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <CartDrawer />
+    </>
   );
 }
 

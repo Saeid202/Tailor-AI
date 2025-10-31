@@ -801,7 +801,8 @@ function CameraSection({
   );
 }
 
-const Index = () => {
+// Main content component (without header) - for use in tabs
+export const IndexContent = () => {
   // IMPORTANT: All hooks must be called before any conditional returns
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -934,22 +935,11 @@ const Index = () => {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-muted/5 to-muted/10">
+      <div className="flex flex-col bg-gradient-to-br from-background via-muted/5 to-muted/10">
         <OnboardingModal 
           open={showOnboarding} 
           onComplete={handleOnboardingComplete} 
         />
-        
-        {/* Header */}
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
-          <AppHeader
-            stage={stage}
-            onBackToCamera={handleBackToCamera}
-            onViewHistory={handleViewHistory}
-            onViewAnalytics={handleViewAnalytics}
-            hasMeasurements={measurements.length > 0}
-          />
-        </div>
 
         {/* Workflow Navigation */}
         <WorkflowProvider>
@@ -1108,215 +1098,28 @@ const Index = () => {
             )}
           </div>
 
-          {/* Same Footer as Landing Page */}
-          <footer className="bg-gradient-to-br from-background via-muted/20 to-muted/40 border-t">
-            <div className="container mx-auto px-4">
-              {/* Main Footer Content */}
-              <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                
-                {/* Company Info */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-primary/80 shadow-lg shadow-primary/25 ring-1 ring-primary/20">
-                        <Ruler className="h-5 w-5 text-primary-foreground" />
-                      </div>
-                      <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 animate-pulse" />
-                    </div>
-                    <div className="leading-tight">
-                      <span className="block text-xl font-bold tracking-tight">
-                        <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Tailor</span>
-                        <span className="ml-1 text-foreground/90 font-light">AI</span>
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-muted-foreground leading-relaxed">
-                    Revolutionizing fashion with AI-powered precision measurements. Get the perfect fit every time with our cutting-edge technology.
-                  </p>
-                  
-                  <div className="flex space-x-4">
-                    <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                      <Facebook className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                      <Twitter className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                      <Instagram className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                      <Youtube className="h-5 w-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary">
-                      <Linkedin className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Quick Links */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-foreground">Quick Links</h3>
-                  <nav className="flex flex-col space-y-3">
-                    <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-primary transition-colors text-left">
-                      Home
-                    </button>
-                    <button onClick={() => setStage('camera')} className="text-muted-foreground hover:text-primary transition-colors text-left">
-                      New Measurement
-                    </button>
-                    <button onClick={() => setStage('history')} className="text-muted-foreground hover:text-primary transition-colors text-left">
-                      History
-                    </button>
-                    <button onClick={() => setStage('analytics')} className="text-muted-foreground hover:text-primary transition-colors text-left">
-                      Analytics
-                    </button>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Help & Support
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      FAQ
-                    </a>
-                  </nav>
-                </div>
-
-                {/* Products & Services */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-foreground">Products</h3>
-                  <nav className="flex flex-col space-y-3">
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Body Measurements
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Custom Tailoring
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Ready-Made Clothes
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Sewing Patterns
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Size Analytics
-                    </a>
-                    <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                      Developer API
-                    </a>
-                  </nav>
-                </div>
-
-                {/* Contact Info */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-foreground">Contact Us</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <Mail className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Email</p>
-                        <a href="mailto:hello@tailor.ai" className="text-muted-foreground hover:text-primary transition-colors">
-                          hello@tailor.ai
-                        </a>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <Phone className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Phone</p>
-                        <a href="tel:+15551234567" className="text-muted-foreground hover:text-primary transition-colors">
-                          +1 (555) 123-4567
-                        </a>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Address</p>
-                        <p className="text-muted-foreground">
-                          123 Innovation Street<br />
-                          San Francisco, CA 94105<br />
-                          United States
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Newsletter Signup */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Stay Updated</h4>
-                    <div className="flex space-x-2">
-                      <input 
-                        type="email" 
-                        placeholder="Enter your email"
-                        className="flex-1 px-3 py-2 text-sm border border-input bg-background rounded-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      />
-                      <Button size="sm" className="px-4">
-                        Subscribe
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Footer */}
-              <div className="border-t border-border py-8">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-muted-foreground">
-                    <p>© 2025 Tailor AI. All rights reserved.</p>
-                    <div className="flex space-x-4">
-                      <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-                      <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-                      <a href="#" className="hover:text-primary transition-colors">Cookie Policy</a>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Made with</span>
-                    <span className="text-red-500 animate-pulse">❤️</span>
-                    <span>for perfect fit</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </footer>
-
-          {/* Enhanced Bottom Action Bar */}
-          {stage === 'camera' && (
-            <div className="sticky bottom-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/50 shadow-lg">
-              <div className="container mx-auto px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-sm text-muted-foreground">
-                      Click the camera to start measuring your <span className="font-semibold text-primary">{garmentType}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setStage('history')}
-                      className="hidden sm:flex"
-                    >
-                      <History className="w-4 h-4 mr-2" />
-                      History
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setStage('analytics')}
-                      className="hidden md:flex"
-                    >
-                      <BarChart3 className="w-4 h-4 mr-2" />
-                      Analytics
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Footer and bottom action bar removed for tab view */}
         </WorkflowProvider>
       </div>
     </ErrorBoundary>
+  );
+};
+
+// Full page component with header (for standalone route)
+const Index = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm">
+        <AppHeader
+          stage="camera"
+          onBackToCamera={() => {}}
+          onViewHistory={() => {}}
+          onViewAnalytics={() => {}}
+          hasMeasurements={false}
+        />
+      </div>
+      <IndexContent />
+    </div>
   );
 };
 

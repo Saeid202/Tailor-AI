@@ -5,10 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
+import { useAutoCreateProfile } from "@/hooks/useAutoCreateProfile";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
+import SimpleAuth from "./pages/SimpleAuth";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 // Create QueryClient with HMR stability
 let queryClient = new QueryClient();
@@ -23,13 +25,21 @@ if (import.meta.hot) {
 }
 
 const AppContent = () => {
+  // Auto-create profiles when users sign in
+  useAutoCreateProfile();
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/auth" element={<SimpleAuth />} />
       <Route path="/app" element={
         <ProtectedRoute>
-          <Index />
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />

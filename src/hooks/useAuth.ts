@@ -1,89 +1,69 @@
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { localAuth, type LocalUser } from '@/lib/local-auth';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check for existing session
+    const checkSession = () => {
+      const currentUser = localAuth.getUser();
+      setUser(currentUser);
       setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    checkSession();
+
+    // Listen for storage changes (when user signs in/out in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tailor_ai_session') {
+        checkSession();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Poll for changes (for same-tab updates)
+    const interval = setInterval(checkSession, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    try {
-      const redirectUrl = `${window.location.origin}/app`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-
-      if (error) throw error;
-      
-      toast.success('Account created! You can now sign in.');
-      return { error: null };
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
-      return { error };
+  const signUp = async (email: string, password: string, fullName?: string) => {
+    const { user, error } = await localAuth.signUp(email, password, fullName);
+    
+    if (user && !error) {
+      setUser(user);
     }
+    
+    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      toast.success('Welcome back!');
-      return { error: null };
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
-      return { error };
+    const { user, error } = await localAuth.signIn(email, password);
+    
+    if (user && !error) {
+      setUser(user);
     }
+    
+    return { error };
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast.success('Signed out successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign out');
-    }
+    localAuth.signOut();
+    setUser(null);
   };
 
   return {
     user,
-    session,
     loading,
     signUp,
     signIn,
     signOut,
+    isAuthenticated: !!user,
   };
 }

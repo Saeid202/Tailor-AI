@@ -1,0 +1,42 @@
+# Python files and dependencies
+*.py
+*.pyc
+__pycache__/
+requirements.txt
+requirements_minimal.txt
+venv/
+venv_py312/
+*.egg-info/
+.pytest_cache/
+.python-version
+
+# Python source directories
+src/camera/
+src/measurements/
+src/reconstruction/
+src/utils/*.py
+src/vision/
+main.py
+scanning_orchestrator.py
+test_*.py
+FINAL_TEST_REPORT.py
+
+# Python data and logs
+data/
+logs/
+*.log
+
+# Configuration
+config/config.yaml
+
+# Documentation (not needed for deployment)
+*.md
+!README.md
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+

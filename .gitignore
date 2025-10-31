@@ -55,3 +55,8 @@ Thumbs.db
 
 # Configuration (keep template, ignore custom)
 config/camera_calibration.pkl
+
+# Environment variables
+.env
+.env.local
+.env.*.local
